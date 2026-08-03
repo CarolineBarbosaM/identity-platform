@@ -1,4 +1,5 @@
 import { UserStatus } from '../enums/user-status.enum';
+import { Clock } from '../../../shared/domain/clock';
 
 export interface CreateUserProps {
   id: string;
@@ -7,7 +8,7 @@ export interface CreateUserProps {
 }
 
 export class User {
-  private constructor(
+    private constructor(
     private readonly id: string,
     private readonly name: string,
     private readonly email: string,
@@ -15,10 +16,11 @@ export class User {
     private readonly createdAt: Date,
     private updatedAt: Date,
     private emailVerifiedAt: Date | null,
+    private readonly clock: Clock,
   ) {}
 
-  static create(props: CreateUserProps): User {
-    const now = new Date();
+  static create(props: CreateUserProps, clock: Clock): User {
+    const now = clock.now();
 
     return new User(
       props.id,
@@ -28,6 +30,7 @@ export class User {
       now,
       now,
       null,
+      clock,
     );
   }
 
@@ -36,9 +39,11 @@ export class User {
       throw new Error('User email cannot be verified in the current state');
     }
 
+    const now = this.clock.now();
+
     this.status = UserStatus.ACTIVE;
-    this.emailVerifiedAt = new Date();
-    this.updatedAt = new Date();
+    this.emailVerifiedAt = now;
+    this.updatedAt = now;
   }
 
   suspend(): void {
@@ -46,8 +51,21 @@ export class User {
       return;
     }
 
+    const now = this.clock.now();
+
     this.status = UserStatus.SUSPENDED;
-    this.updatedAt = new Date();
+    this.updatedAt = now;
+  }
+
+  reactivate(): void {
+    if (this.status !== UserStatus.SUSPENDED) {
+      throw new Error('User cannot be reactivated in the current state');
+    }
+
+    const now = this.clock.now();
+
+    this.status = UserStatus.ACTIVE;
+    this.updatedAt = now;
   }
 
   lock(): void {
@@ -55,8 +73,10 @@ export class User {
       return;
     }
 
+    const now = this.clock.now();
+
     this.status = UserStatus.LOCKED;
-    this.updatedAt = new Date();
+    this.updatedAt = now;
   }
 
   getId(): string {
