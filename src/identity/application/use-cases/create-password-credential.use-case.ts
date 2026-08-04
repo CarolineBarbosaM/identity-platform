@@ -1,6 +1,9 @@
+import { Inject } from '@nestjs/common';
 import { PasswordCredential } from '../../domain/entities/password-credential.entity';
-import { PasswordHasher } from '../../domain/services/password-hasher';
-import { Clock } from '../../../shared/domain/clock';
+import { PASSWORD_HASHER } from '../../domain/services/password-hasher';
+import type { PasswordHasher } from '../../domain/services/password-hasher';
+import { CLOCK } from '../../../shared/domain/clock';
+import type { Clock } from '../../../shared/domain/clock';
 
 export interface CreatePasswordCredentialInput {
   id: string;
@@ -10,7 +13,10 @@ export interface CreatePasswordCredentialInput {
 
 export class CreatePasswordCredential {
   constructor(
+    @Inject(PASSWORD_HASHER)
     private readonly passwordHasher: PasswordHasher,
+
+    @Inject(CLOCK)
     private readonly clock: Clock,
   ) {}
 
