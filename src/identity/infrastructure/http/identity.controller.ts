@@ -1,4 +1,9 @@
-import { Body, Controller, Post } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  HttpCode,
+  Post,
+} from '@nestjs/common';
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
 
 export interface AuthenticateRequest {
@@ -13,12 +18,17 @@ export class IdentityController {
   ) {}
 
   @Post('login')
+  @HttpCode(200)
   async authenticate(
     @Body() request: AuthenticateRequest,
-  ): Promise<boolean> {
-    return this.authenticateUser.execute({
+  ): Promise<{ authenticated: boolean }> {
+    const authenticated = await this.authenticateUser.execute({
       userId: request.userId,
       password: request.password,
     });
+
+    return {
+      authenticated,
+    };
   }
 }
