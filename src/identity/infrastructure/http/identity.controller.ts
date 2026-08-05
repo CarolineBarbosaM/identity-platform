@@ -3,6 +3,7 @@ import {
   Controller,
   HttpCode,
   Post,
+  UnauthorizedException,
 } from '@nestjs/common';
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
 
@@ -27,8 +28,14 @@ export class IdentityController {
       password: request.password,
     });
 
+    if (!authenticated) {
+      throw new UnauthorizedException({
+        authenticated: false,
+      });
+    }
+
     return {
-      authenticated,
+      authenticated: true,
     };
   }
 }

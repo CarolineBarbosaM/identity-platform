@@ -69,4 +69,18 @@ describe('Identity (e2e)', () => {
         authenticated: true,
     });
   });
+
+  it('POST /auth/login should reject invalid password', async () => {
+    const response = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        userId: 'user-id',
+        password: 'wrong-password',
+      });
+
+    expect(response.status).toBe(401);
+    expect(response.body).toEqual({
+      authenticated: false,
+    });
+  });
 });
