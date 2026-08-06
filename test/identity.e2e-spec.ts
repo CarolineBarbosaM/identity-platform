@@ -66,7 +66,9 @@ describe('Identity (e2e)', () => {
 
     expect(response.status).toBe(200);
     expect(response.body).toEqual({
-        authenticated: true,
+      authenticated: true,
+      accessToken: expect.any(String),
+      refreshToken: 'refresh-token',
     });
   });
 

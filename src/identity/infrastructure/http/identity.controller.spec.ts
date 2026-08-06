@@ -1,6 +1,7 @@
+import { UnauthorizedException } from '@nestjs/common';
 import { IdentityController } from './identity.controller';
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
-import { UnauthorizedException } from '@nestjs/common';
+import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 
 describe('IdentityController', () => {
   it('should authenticate a user', async () => {
@@ -8,7 +9,16 @@ describe('IdentityController', () => {
       execute: jest.fn().mockResolvedValue(true),
     } as unknown as AuthenticateUser;
 
-    const controller = new IdentityController(authenticateUser);
+    const createSession = {
+      execute: jest.fn().mockResolvedValue({
+        refreshToken: 'refresh-token',
+      }),
+    } as unknown as CreateSessionUseCase;
+
+    const controller = new IdentityController(
+      authenticateUser,
+      createSession,
+    );
 
     const result = await controller.authenticate({
       userId: 'user-id',
@@ -20,8 +30,13 @@ describe('IdentityController', () => {
       password: 'plain-password',
     });
 
+    expect(createSession.execute).toHaveBeenCalledWith({
+      userId: 'user-id',
+    });
+
     expect(result).toEqual({
       authenticated: true,
+      refreshToken: 'refresh-token',
     });
   });
 
@@ -30,7 +45,14 @@ describe('IdentityController', () => {
       execute: jest.fn().mockResolvedValue(false),
     } as unknown as AuthenticateUser;
 
-    const controller = new IdentityController(authenticateUser);
+    const createSession = {
+      execute: jest.fn(),
+    } as unknown as CreateSessionUseCase;
+
+    const controller = new IdentityController(
+      authenticateUser,
+      createSession,
+    );
 
     await expect(
       controller.authenticate({
@@ -47,5 +69,7 @@ describe('IdentityController', () => {
       userId: 'user-id',
       password: 'wrong-password',
     });
+
+    expect(createSession.execute).not.toHaveBeenCalled();
   });
 });

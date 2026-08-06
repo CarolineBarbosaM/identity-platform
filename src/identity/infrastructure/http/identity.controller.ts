@@ -6,6 +6,7 @@ import {
   UnauthorizedException,
 } from '@nestjs/common';
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
+import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 
 export interface AuthenticateRequest {
   userId: string;
@@ -16,13 +17,18 @@ export interface AuthenticateRequest {
 export class IdentityController {
   constructor(
     private readonly authenticateUser: AuthenticateUser,
+    private readonly createSession: CreateSessionUseCase,
   ) {}
 
   @Post('login')
   @HttpCode(200)
   async authenticate(
     @Body() request: AuthenticateRequest,
-  ): Promise<{ authenticated: boolean }> {
+  ): Promise<{
+    authenticated: boolean;
+    accessToken: string;
+    refreshToken: string;
+  }> {
     const authenticated = await this.authenticateUser.execute({
       userId: request.userId,
       password: request.password,
@@ -34,8 +40,15 @@ export class IdentityController {
       });
     }
 
+    const { accessToken, refreshToken } =
+      await this.createSession.execute({
+        userId: request.userId,
+    });
+
     return {
       authenticated: true,
+      accessToken,
+      refreshToken,
     };
   }
 }
