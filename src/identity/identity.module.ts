@@ -2,8 +2,8 @@ import { Module } from '@nestjs/common';
 import { IdentityController } from './infrastructure/http/identity.controller';
 import { AuthenticateUser } from './application/use-cases/authenticate-user.use-case';
 import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
-import { InMemoryPasswordCredentialRepository } from './application/repositories/in-memory-password-credential.repository';
 import { JwtAccessTokenVerifier } from './infrastructure/security/jwt-access-token-verifier';
+import { PostgresPasswordCredentialRepository } from './infrastructure/database/repositories/postgres-password-credential.repository';
 import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
 import { PASSWORD_HASHER } from './domain/services/password-hasher';
 import { PASSWORD_CREDENTIAL_REPOSITORY } from './domain/repositories/password-credential.repository';
@@ -16,6 +16,7 @@ import { Argon2TokenHasher } from './infrastructure/security/argon2-token-hasher
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from './application/use-cases/logout-session.use-case';
 import { AuthGuard } from './infrastructure/http/auth.guard';
+import { DatabaseModule } from '../database/database.module';
 
 import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
 
@@ -26,6 +27,7 @@ import { JwtAccessTokenGenerator } from './infrastructure/security/jwt-access-to
 import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator';
 
 @Module({
+  imports: [DatabaseModule],
   controllers: [IdentityController],
   providers: [
     AuthenticateUser,
@@ -48,7 +50,7 @@ import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator
     },
     {
       provide: PASSWORD_CREDENTIAL_REPOSITORY,
-      useClass: InMemoryPasswordCredentialRepository,
+      useClass: PostgresPasswordCredentialRepository,
     },
     {
       provide: SESSION_REPOSITORY,

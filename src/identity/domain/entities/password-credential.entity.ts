@@ -56,4 +56,24 @@ export class PasswordCredential {
     this.passwordHash = passwordHash;
     this.updatedAt = this.clock.now();
   }
+
+  static rehydrate(
+    props: {
+      id: string;
+      userId: string;
+      passwordHash: string;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    clock: Clock,
+  ): PasswordCredential {
+    return new PasswordCredential(
+      props.id,
+      props.userId,
+      props.passwordHash,
+      props.createdAt,
+      props.updatedAt,
+      clock,
+    );
+  }
 }

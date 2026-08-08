@@ -1,4 +1,12 @@
-import { PASSWORD_HASHER } from '../src/identity/domain/services/password-hasher';
+import { config } from 'dotenv';
+
+config({
+  path: '.env.test',
+});
+
+import {
+  PASSWORD_HASHER,
+} from '../src/identity/domain/services/password-hasher';
 
 import type { PasswordHasher } from '../src/identity/domain/services/password-hasher';
 import { INestApplication } from '@nestjs/common';
@@ -34,8 +42,8 @@ describe('Identity (e2e)', () => {
 
     const credential = PasswordCredential.create(
       {
-        id: 'credential-id',
-        userId: 'user-id',
+        id: '11111111-1111-1111-1111-111111111111',
+        userId: '22222222-2222-2222-2222-222222222222',
         passwordHash,
       },
       new FakeClock(new Date('2026-08-04T10:00:00.000Z')),
@@ -52,7 +60,7 @@ describe('Identity (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        userId: 'user-id',
+        userId: '22222222-2222-2222-2222-222222222222',
         password: 'plain-password',
       });
 
@@ -68,7 +76,7 @@ describe('Identity (e2e)', () => {
     const response = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        userId: 'user-id',
+        userId: '22222222-2222-2222-2222-222222222222',
         password: 'wrong-password',
       });
 
@@ -82,7 +90,7 @@ describe('Identity (e2e)', () => {
     const loginResponse = await request(app.getHttpServer())
       .post('/auth/login')
       .send({
-        userId: 'user-id',
+        userId: '22222222-2222-2222-2222-222222222222',
         password: 'plain-password',
       });
 
@@ -110,36 +118,28 @@ describe('Identity (e2e)', () => {
   });
 
   it('GET /auth/me should authenticate with a valid access token', async () => {
-    const loginResponse =
-      await request(app.getHttpServer())
-        .post('/auth/login')
-        .send({
-          userId: 'user-id',
-          password: 'plain-password',
-        });
+    const loginResponse = await request(app.getHttpServer())
+      .post('/auth/login')
+      .send({
+        userId: '22222222-2222-2222-2222-222222222222',
+        password: 'plain-password',
+      });
 
-    const accessToken =
-      loginResponse.body.accessToken;
+    const accessToken = loginResponse.body.accessToken;
 
-    const response =
-      await request(app.getHttpServer())
-        .get('/auth/me')
-        .set(
-          'Authorization',
-          `Bearer ${accessToken}`,
-        );
+    const response = await request(app.getHttpServer())
+      .get('/auth/me')
+      .set('Authorization', `Bearer ${accessToken}`);
 
     expect(response.status).toBe(200);
 
     expect(response.body).toEqual({
-      userId: 'user-id',
+      userId: '22222222-2222-2222-2222-222222222222',
     });
   });
 
   it('GET /auth/me should reject an unauthenticated request', async () => {
-    const response =
-      await request(app.getHttpServer())
-        .get('/auth/me');
+    const response = await request(app.getHttpServer()).get('/auth/me');
 
     expect(response.status).toBe(401);
   });

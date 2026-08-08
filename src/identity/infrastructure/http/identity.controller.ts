@@ -79,7 +79,8 @@ export class IdentityController {
   @Get('me')
   @UseGuards(AuthGuard)
   async me(
-    @Req() request: {
+    @Req()
+    request: {
       user: {
         userId: string;
       };
