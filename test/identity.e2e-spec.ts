@@ -68,7 +68,9 @@ describe('Identity (e2e)', () => {
     expect(response.body).toEqual({
       authenticated: true,
       accessToken: expect.any(String),
-      refreshToken: 'refresh-token',
+      refreshToken: expect.stringMatching(
+        /^[0-9a-f-]+\.refresh-token$/,
+      ),
     });
   });
 

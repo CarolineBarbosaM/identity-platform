@@ -1,4 +1,6 @@
-import type { RefreshTokenGenerator } from '../../domain/services/refresh-token-generator';
+import type {
+  RefreshTokenGenerator,
+} from '../../domain/services/refresh-token-generator';
 
 export class FakeRefreshTokenGenerator
   implements RefreshTokenGenerator

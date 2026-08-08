@@ -1,5 +1,4 @@
 import { Inject } from '@nestjs/common';
-import { Session } from '../../domain/entities/session.entity';
 import { randomUUID } from 'crypto';
 
 import {
@@ -26,12 +25,12 @@ import type {
   Clock,
 } from '../../../shared/domain/clock';
 
-import type {
-  TokenHasher,
-} from '../../domain/services/token-hasher';
-
 import {
   TOKEN_HASHER,
+} from '../../domain/services/token-hasher';
+
+import type {
+  TokenHasher,
 } from '../../domain/services/token-hasher';
 
 import {
@@ -41,6 +40,8 @@ import {
 import type {
   AccessTokenGenerator,
 } from '../../domain/services/access-token-generator';
+
+import { Session } from '../../domain/entities/session.entity';
 
 export interface CreateSessionInput {
   userId: string;
@@ -73,13 +74,18 @@ export class CreateSessionUseCase {
   async execute(
     input: CreateSessionInput,
   ): Promise<CreateSessionOutput> {
-    const refreshToken =
+    const sessionId = randomUUID();
+
+    const refreshTokenSecret =
       await this.refreshTokenGenerator.generate();
+
+    const refreshToken =
+      `${sessionId}.${refreshTokenSecret}`;
 
     const accessToken =
       await this.accessTokenGenerator.generate({
         userId: input.userId,
-    });
+      });
 
     const expiresAt = new Date(
       this.clock.now().getTime() +
@@ -87,11 +93,11 @@ export class CreateSessionUseCase {
     );
 
     const refreshTokenHash =
-    await this.tokenHasher.hash(refreshToken);
+      await this.tokenHasher.hash(refreshToken);
 
     const session = Session.create(
       {
-        id: randomUUID(),
+        id: sessionId,
         userId: input.userId,
         refreshTokenHash,
         expiresAt,

@@ -29,7 +29,7 @@ describe('CreateSessionUseCase', () => {
     });
 
     expect(result.refreshToken).toBe(
-      'refresh-token',
+      `${result.session.getId()}.refresh-token`,
     );
 
     expect(result.accessToken).toBe(
@@ -47,7 +47,7 @@ describe('CreateSessionUseCase', () => {
 
     expect(storedSession).toBe(result.session);
     expect(result.session.getRefreshTokenHash()).toBe(
-      'hashed-refresh-token',
+      `hashed-${result.refreshToken}`,
     );
   });
 });

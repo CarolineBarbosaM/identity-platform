@@ -15,6 +15,7 @@ import { SystemClock } from '../shared/infrastructure/system-clock';
 import { CreateSessionUseCase } from './application/use-cases/create-session.use-case';
 import { InMemorySessionRepository } from './application/repositories/in-memory-session.repository';
 import { Argon2TokenHasher } from './infrastructure/security/argon2-token-hasher';
+import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 
 import {
   SESSION_REPOSITORY,
@@ -38,6 +39,7 @@ import {
     AuthenticateUser,
     CreatePasswordCredential,
     CreateSessionUseCase,
+    RefreshSessionUseCase,
     {
       provide: PASSWORD_HASHER,
       useClass: Argon2PasswordHasher,

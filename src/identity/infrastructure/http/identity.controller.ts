@@ -7,6 +7,7 @@ import {
 } from '@nestjs/common';
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
+import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 
 export interface AuthenticateRequest {
   userId: string;
@@ -18,6 +19,7 @@ export class IdentityController {
   constructor(
     private readonly authenticateUser: AuthenticateUser,
     private readonly createSession: CreateSessionUseCase,
+    private readonly refreshSession: RefreshSessionUseCase,
   ) {}
 
   @Post('login')
@@ -50,5 +52,20 @@ export class IdentityController {
       accessToken,
       refreshToken,
     };
+  }
+
+  @Post('refresh')
+  @HttpCode(200)
+  async refresh(
+    @Body() request: {
+      refreshToken: string;
+    },
+  ): Promise<{
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    return this.refreshSession.execute({
+      refreshToken: request.refreshToken,
+    });
   }
 }
