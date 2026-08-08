@@ -7,6 +7,16 @@ export interface CreateSessionProps {
   expiresAt: Date;
 }
 
+export interface RehydrateSessionProps {
+  id: string;
+  userId: string;
+  refreshTokenHash: string;
+  expiresAt: Date;
+  revokedAt: Date | null;
+  createdAt: Date;
+  updatedAt: Date;
+}
+
 export class Session {
   private constructor(
     private readonly id: string,
@@ -65,5 +75,20 @@ export class Session {
 
     this.revokedAt = now;
     this.updatedAt = now;
+  }
+
+  static rehydrate(
+    props: RehydrateSessionProps,
+    clock: Clock,
+  ): Session {
+    return new Session(
+      props.id,
+      props.userId,
+      props.refreshTokenHash,
+      props.expiresAt,
+      props.revokedAt,
+      props.createdAt,
+      props.updatedAt,
+    );
   }
 }

@@ -2,6 +2,7 @@ import 'dotenv/config';
 import { DataSource } from 'typeorm';
 
 import { PasswordCredentialOrmEntity } from '../identity/infrastructure/database/entities/password-credential.orm-entity';
+import { SessionOrmEntity } from '../identity/infrastructure/database/entities/session.orm-entity';
 
 export default new DataSource({
   type: 'postgres',
@@ -10,6 +11,9 @@ export default new DataSource({
   username: process.env.DATABASE_USER ?? 'postgres',
   password: process.env.DATABASE_PASSWORD ?? 'postgres',
   database: process.env.DATABASE_NAME ?? 'identity',
-  entities: [PasswordCredentialOrmEntity],
+  entities: [
+    PasswordCredentialOrmEntity,
+    SessionOrmEntity,
+  ],
   migrations: ['src/database/migrations/*.ts'],
 });

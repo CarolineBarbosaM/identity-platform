@@ -11,12 +11,13 @@ import { CreatePasswordCredential } from './application/use-cases/create-passwor
 import { CLOCK } from '../shared/domain/clock';
 import { SystemClock } from '../shared/infrastructure/system-clock';
 import { CreateSessionUseCase } from './application/use-cases/create-session.use-case';
-import { InMemorySessionRepository } from './application/repositories/in-memory-session.repository';
 import { Argon2TokenHasher } from './infrastructure/security/argon2-token-hasher';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from './application/use-cases/logout-session.use-case';
 import { AuthGuard } from './infrastructure/http/auth.guard';
 import { DatabaseModule } from '../database/database.module';
+import { PostgresSessionRepository } from './infrastructure/database/repositories/postgres-session.repository';
+
 
 import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
 
@@ -52,9 +53,9 @@ import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator
       provide: PASSWORD_CREDENTIAL_REPOSITORY,
       useClass: PostgresPasswordCredentialRepository,
     },
-    {
-      provide: SESSION_REPOSITORY,
-      useClass: InMemorySessionRepository,
+    { 
+      provide: SESSION_REPOSITORY, 
+      useClass: PostgresSessionRepository, 
     },
     {
       provide: ACCESS_TOKEN_GENERATOR,

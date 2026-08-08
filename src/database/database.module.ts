@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { TypeOrmModule } from '@nestjs/typeorm';
-
+import { SessionOrmEntity } from '../identity/infrastructure/database/entities/session.orm-entity';
 import { PasswordCredentialOrmEntity } from '../identity/infrastructure/database/entities/password-credential.orm-entity';
 
 @Module({
@@ -16,9 +16,7 @@ import { PasswordCredentialOrmEntity } from '../identity/infrastructure/database
       synchronize: false,
     }),
 
-    TypeOrmModule.forFeature([
-      PasswordCredentialOrmEntity,
-    ]),
+    TypeOrmModule.forFeature([ PasswordCredentialOrmEntity, SessionOrmEntity, ]),
   ],
   exports: [TypeOrmModule],
 })
