@@ -2,9 +2,7 @@ import { JwtService } from '@nestjs/jwt';
 
 import type { AccessTokenGenerator } from '../../domain/services/access-token-generator';
 
-export class JwtAccessTokenGenerator
-  implements AccessTokenGenerator
-{
+export class JwtAccessTokenGenerator implements AccessTokenGenerator {
   private readonly jwtService: JwtService;
 
   constructor(secret: string) {
@@ -13,9 +11,7 @@ export class JwtAccessTokenGenerator
     });
   }
 
-  async generate(input: {
-    userId: string;
-  }): Promise<string> {
+  async generate(input: { userId: string }): Promise<string> {
     return this.jwtService.signAsync(
       {
         sub: input.userId,

@@ -5,9 +5,7 @@ import { FakeClock } from '../../../shared/domain/fake-clock';
 describe('InMemorySessionRepository', () => {
   it('should save and find a session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const session = Session.create(
       {
@@ -21,9 +19,7 @@ describe('InMemorySessionRepository', () => {
 
     await repository.save(session);
 
-    const result = await repository.findById(
-      'session-id',
-    );
+    const result = await repository.findById('session-id');
 
     expect(result).toBe(session);
   });

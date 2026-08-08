@@ -3,9 +3,7 @@ import { JwtAccessTokenGenerator } from './jwt-access-token-generator';
 
 describe('JwtAccessTokenGenerator', () => {
   it('should generate an access token with user identity', async () => {
-    const generator = new JwtAccessTokenGenerator(
-      'test-secret',
-    );
+    const generator = new JwtAccessTokenGenerator('test-secret');
 
     const token = await generator.generate({
       userId: 'user-id',

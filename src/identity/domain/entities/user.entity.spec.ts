@@ -8,11 +8,14 @@ const clock = new FakeClock(currentDate);
 describe('User', () => {
   describe('create', () => {
     it('should create a user with pending email verification status', () => {
-      const user = User.create({
-        id: 'user-id',
-        name: 'Caroline',
-        email: 'caroline@example.com',
-      }, clock);
+      const user = User.create(
+        {
+          id: 'user-id',
+          name: 'Caroline',
+          email: 'caroline@example.com',
+        },
+        clock,
+      );
 
       expect(user.getStatus()).toBe(UserStatus.PENDING_EMAIL_VERIFICATION);
       expect(user.getEmailVerifiedAt()).toBeNull();
@@ -23,11 +26,14 @@ describe('User', () => {
 
   describe('verifyEmail', () => {
     it('should activate the user after email verification', () => {
-      const user = User.create({
-        id: 'user-id',
-        name: 'Caroline',
-        email: 'caroline@example.com',
-      }, clock);
+      const user = User.create(
+        {
+          id: 'user-id',
+          name: 'Caroline',
+          email: 'caroline@example.com',
+        },
+        clock,
+      );
 
       user.verifyEmail();
 
@@ -38,11 +44,14 @@ describe('User', () => {
     });
 
     it('should not verify an already verified email', () => {
-      const user = User.create({
-        id: 'user-id',
-        name: 'Caroline',
-        email: 'caroline@example.com',
-      }, clock);
+      const user = User.create(
+        {
+          id: 'user-id',
+          name: 'Caroline',
+          email: 'caroline@example.com',
+        },
+        clock,
+      );
 
       user.verifyEmail();
 
@@ -55,11 +64,14 @@ describe('User', () => {
 
 describe('suspend', () => {
   it('should suspend an active user', () => {
-    const user = User.create({
-      id: 'user-id',
-      name: 'Caroline',
-      email: 'caroline@example.com',
-    }, clock);
+    const user = User.create(
+      {
+        id: 'user-id',
+        name: 'Caroline',
+        email: 'caroline@example.com',
+      },
+      clock,
+    );
 
     user.verifyEmail();
     user.suspend();
@@ -68,11 +80,14 @@ describe('suspend', () => {
   });
 
   it('should reactivate a suspended user', () => {
-    const user = User.create({
-      id: 'user-id',
-      name: 'Caroline',
-      email: 'caroline@example.com',
-    }, clock);
+    const user = User.create(
+      {
+        id: 'user-id',
+        name: 'Caroline',
+        email: 'caroline@example.com',
+      },
+      clock,
+    );
 
     user.verifyEmail();
     user.suspend();
@@ -83,11 +98,14 @@ describe('suspend', () => {
   });
 
   it('should not reactivate an active user', () => {
-    const user = User.create({
-      id: 'user-id',
-      name: 'Caroline',
-      email: 'caroline@example.com',
-    }, clock);
+    const user = User.create(
+      {
+        id: 'user-id',
+        name: 'Caroline',
+        email: 'caroline@example.com',
+      },
+      clock,
+    );
 
     user.verifyEmail();
 
@@ -99,11 +117,14 @@ describe('suspend', () => {
 
 describe('lock', () => {
   it('should lock an active user', () => {
-    const user = User.create({
-      id: 'user-id',
-      name: 'Caroline',
-      email: 'caroline@example.com',
-    }, clock);
+    const user = User.create(
+      {
+        id: 'user-id',
+        name: 'Caroline',
+        email: 'caroline@example.com',
+      },
+      clock,
+    );
 
     user.verifyEmail();
     user.lock();

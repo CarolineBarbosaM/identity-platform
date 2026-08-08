@@ -1,14 +1,10 @@
 import { PasswordCredential } from '../../domain/entities/password-credential.entity';
 import { PasswordCredentialRepository } from '../../domain/repositories/password-credential.repository';
 
-export class InMemoryPasswordCredentialRepository
-  implements PasswordCredentialRepository
-{
+export class InMemoryPasswordCredentialRepository implements PasswordCredentialRepository {
   private readonly credentials: PasswordCredential[] = [];
 
-  async findByUserId(
-    userId: string,
-  ): Promise<PasswordCredential | null> {
+  async findByUserId(userId: string): Promise<PasswordCredential | null> {
     return (
       this.credentials.find(
         (credential) => credential.getUserId() === userId,

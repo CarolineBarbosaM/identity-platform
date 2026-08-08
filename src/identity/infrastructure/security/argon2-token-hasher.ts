@@ -9,10 +9,7 @@ export class Argon2TokenHasher implements TokenHasher {
     });
   }
 
-  async compare(
-    token: string,
-    hash: string,
-  ): Promise<boolean> {
+  async compare(token: string, hash: string): Promise<boolean> {
     return argon2.verify(hash, token);
   }
 }

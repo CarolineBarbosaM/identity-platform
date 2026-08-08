@@ -5,11 +5,7 @@ export class InMemorySessionRepository implements SessionRepository {
   private readonly sessions: Session[] = [];
 
   async findById(id: string): Promise<Session | null> {
-    return (
-      this.sessions.find(
-        (session) => session.getId() === id,
-      ) ?? null
-    );
+    return this.sessions.find((session) => session.getId() === id) ?? null;
   }
 
   async save(session: Session): Promise<void> {

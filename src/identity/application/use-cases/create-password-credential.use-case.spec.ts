@@ -10,14 +10,9 @@ describe('CreatePasswordCredential', () => {
       compare: jest.fn(),
     };
 
-    const clock = new FakeClock(
-      new Date('2026-08-04T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-04T10:00:00.000Z'));
 
-    const useCase = new CreatePasswordCredential(
-      passwordHasher,
-      clock,
-    );
+    const useCase = new CreatePasswordCredential(passwordHasher, clock);
 
     const credential = await useCase.execute({
       id: 'credential-id',

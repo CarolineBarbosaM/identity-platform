@@ -5,10 +5,7 @@ export class FakeTokenHasher implements TokenHasher {
     return `hashed-${token}`;
   }
 
-  async compare(
-    token: string,
-    hash: string,
-  ): Promise<boolean> {
+  async compare(token: string, hash: string): Promise<boolean> {
     return hash === `hashed-${token}`;
   }
 }

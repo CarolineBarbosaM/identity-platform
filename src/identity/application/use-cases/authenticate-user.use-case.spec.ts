@@ -11,9 +11,7 @@ describe('AuthenticateUser', () => {
       compare: jest.fn().mockResolvedValue(true),
     };
 
-    const clock = new FakeClock(
-      new Date('2026-08-04T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-04T10:00:00.000Z'));
 
     const credential = PasswordCredential.create(
       {
@@ -29,10 +27,7 @@ describe('AuthenticateUser', () => {
       save: jest.fn(),
     };
 
-    const useCase = new AuthenticateUser(
-      repository,
-      passwordHasher,
-    );
+    const useCase = new AuthenticateUser(repository, passwordHasher);
 
     const result = await useCase.execute({
       userId: 'user-id',
@@ -47,70 +42,62 @@ describe('AuthenticateUser', () => {
     expect(result).toBe(true);
   });
 
-    it('should not authenticate a user without a password credential', async () => {
-        const passwordHasher: PasswordHasher = {
-            hash: jest.fn(),
-            compare: jest.fn(),
-        };
+  it('should not authenticate a user without a password credential', async () => {
+    const passwordHasher: PasswordHasher = {
+      hash: jest.fn(),
+      compare: jest.fn(),
+    };
 
-        const repository: PasswordCredentialRepository = {
-            findByUserId: jest.fn().mockResolvedValue(null),
-            save: jest.fn(),
-        };
+    const repository: PasswordCredentialRepository = {
+      findByUserId: jest.fn().mockResolvedValue(null),
+      save: jest.fn(),
+    };
 
-        const useCase = new AuthenticateUser(
-            repository,
-            passwordHasher,
-        );
+    const useCase = new AuthenticateUser(repository, passwordHasher);
 
-        const result = await useCase.execute({
-            userId: 'user-id',
-            password: 'plain-password',
-        });
-
-        expect(repository.findByUserId).toHaveBeenCalledWith('user-id');
-        expect(passwordHasher.compare).not.toHaveBeenCalled();
-        expect(result).toBe(false);
+    const result = await useCase.execute({
+      userId: 'user-id',
+      password: 'plain-password',
     });
 
-    it('should not authenticate a user with an invalid password', async () => {
-        const passwordHasher: PasswordHasher = {
-            hash: jest.fn(),
-            compare: jest.fn().mockResolvedValue(false),
-        };
+    expect(repository.findByUserId).toHaveBeenCalledWith('user-id');
+    expect(passwordHasher.compare).not.toHaveBeenCalled();
+    expect(result).toBe(false);
+  });
 
-        const clock = new FakeClock(
-            new Date('2026-08-04T10:00:00.000Z'),
-        );
+  it('should not authenticate a user with an invalid password', async () => {
+    const passwordHasher: PasswordHasher = {
+      hash: jest.fn(),
+      compare: jest.fn().mockResolvedValue(false),
+    };
 
-        const credential = PasswordCredential.create(
-            {
-            id: 'credential-id',
-            userId: 'user-id',
-            passwordHash: 'hashed-password',
-            },
-            clock,
-        );
+    const clock = new FakeClock(new Date('2026-08-04T10:00:00.000Z'));
 
-        const repository: PasswordCredentialRepository = {
-            findByUserId: jest.fn().mockResolvedValue(credential),
-            save: jest.fn(),
-        };
+    const credential = PasswordCredential.create(
+      {
+        id: 'credential-id',
+        userId: 'user-id',
+        passwordHash: 'hashed-password',
+      },
+      clock,
+    );
 
-        const useCase = new AuthenticateUser(
-            repository,
-            passwordHasher,
-        );
+    const repository: PasswordCredentialRepository = {
+      findByUserId: jest.fn().mockResolvedValue(credential),
+      save: jest.fn(),
+    };
 
-        const result = await useCase.execute({
-            userId: 'user-id',
-            password: 'wrong-password',
-        });
+    const useCase = new AuthenticateUser(repository, passwordHasher);
 
-        expect(passwordHasher.compare).toHaveBeenCalledWith(
-            'wrong-password',
-            'hashed-password',
-        );
-        expect(result).toBe(false);
+    const result = await useCase.execute({
+      userId: 'user-id',
+      password: 'wrong-password',
     });
+
+    expect(passwordHasher.compare).toHaveBeenCalledWith(
+      'wrong-password',
+      'hashed-password',
+    );
+    expect(result).toBe(false);
+  });
 });

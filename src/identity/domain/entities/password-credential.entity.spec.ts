@@ -18,9 +18,7 @@ describe('PasswordCredential', () => {
 
       expect(credential.getId()).toBe('credential-id');
       expect(credential.getUserId()).toBe('user-id');
-      expect(credential.getPasswordHash()).toBe(
-        '$argon2id$v=19$example-hash',
-      );
+      expect(credential.getPasswordHash()).toBe('$argon2id$v=19$example-hash');
       expect(credential.getCreatedAt()).toBe(currentDate);
       expect(credential.getUpdatedAt()).toBe(currentDate);
     });
@@ -39,9 +37,7 @@ describe('PasswordCredential', () => {
 
       credential.changePassword('$argon2id$v=19$new-hash');
 
-      expect(credential.getPasswordHash()).toBe(
-        '$argon2id$v=19$new-hash',
-      );
+      expect(credential.getPasswordHash()).toBe('$argon2id$v=19$new-hash');
     });
   });
 });
