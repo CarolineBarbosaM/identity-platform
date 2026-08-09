@@ -54,6 +54,11 @@ export class Session {
     return this.refreshTokenHash;
   }
 
+  rotateRefreshToken(refreshTokenHash: string, clock: Clock): void {
+    this.refreshTokenHash = refreshTokenHash;
+    this.updatedAt = clock.now();
+  }
+
   getExpiresAt(): Date {
     return this.expiresAt;
   }

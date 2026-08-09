@@ -10,10 +10,11 @@ import { Session } from '../../domain/entities/session.entity';
 describe('RefreshSessionUseCase', () => {
   it('should refresh a valid session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
+    const clock = new FakeClock(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
 
     const refreshTokenGenerator = new FakeRefreshTokenGenerator();
-
     const tokenHasher = new FakeTokenHasher();
     const accessTokenGenerator = new FakeAccessTokenGenerator();
 
@@ -48,13 +49,28 @@ describe('RefreshSessionUseCase', () => {
 
     expect(result.refreshToken).toMatch(/^[0-9a-f-]+\.refresh-token$/);
 
-    expect(session.getRevokedAt()).not.toBeNull();
+    expect(session.getRevokedAt()).toEqual(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
+
+    const persistedSession = await repository.findById(sessionId);
+
+    expect(persistedSession).not.toBeNull();
+    expect(persistedSession?.getId()).toBe(sessionId);
+    expect(persistedSession?.getUserId()).toBe('user-id');
+    expect(persistedSession?.getRevokedAt()).toEqual(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
+    expect(persistedSession?.getRefreshTokenHash()).toBe(
+      'hashed-session-id.refresh-token',
+    );
 
     const newSessionId = result.refreshToken.split('.')[0];
 
     const newSession = await repository.findById(newSessionId);
 
     expect(newSession).not.toBeNull();
+    expect(newSession?.getId()).toBe(newSessionId);
     expect(newSession?.getUserId()).toBe('user-id');
     expect(newSession?.getRevokedAt()).toBeNull();
     expect(newSession?.getRefreshTokenHash()).toBe(
@@ -64,7 +80,9 @@ describe('RefreshSessionUseCase', () => {
 
   it('should reject when session does not exist', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
+    const clock = new FakeClock(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
 
     const useCase = new RefreshSessionUseCase(
       repository,
@@ -83,7 +101,9 @@ describe('RefreshSessionUseCase', () => {
 
   it('should reject a revoked session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
+    const clock = new FakeClock(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
 
     const session = Session.create(
       {
@@ -116,7 +136,9 @@ describe('RefreshSessionUseCase', () => {
 
   it('should reject an expired session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
+    const clock = new FakeClock(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
 
     const session = Session.create(
       {
@@ -147,7 +169,9 @@ describe('RefreshSessionUseCase', () => {
 
   it('should revoke the session when refresh token is invalid', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
+    const clock = new FakeClock(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
 
     const session = Session.create(
       {
@@ -175,6 +199,70 @@ describe('RefreshSessionUseCase', () => {
       }),
     ).rejects.toThrow(UnauthorizedException);
 
-    expect(session.getRevokedAt()).not.toBeNull();
+    expect(session.getRevokedAt()).toEqual(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
+  });
+
+  it('should reject when a refresh token is reused', async () => {
+    const repository = new InMemorySessionRepository();
+
+    const clock = new FakeClock(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
+
+    const refreshTokenGenerator = new FakeRefreshTokenGenerator();
+    const tokenHasher = new FakeTokenHasher();
+    const accessTokenGenerator = new FakeAccessTokenGenerator();
+
+    const sessionId = 'session-id';
+    const originalRefreshToken = `${sessionId}.refresh-token`;
+
+    const session = Session.create(
+      {
+        id: sessionId,
+        userId: 'user-id',
+        refreshTokenHash: `hashed-${originalRefreshToken}`,
+        expiresAt: new Date('2026-09-05T10:00:00.000Z'),
+      },
+      clock,
+    );
+
+    await repository.save(session);
+
+    const useCase = new RefreshSessionUseCase(
+      repository,
+      refreshTokenGenerator,
+      tokenHasher,
+      accessTokenGenerator,
+      clock,
+    );
+
+    await useCase.execute({
+      refreshToken: originalRefreshToken,
+    });
+
+    expect(session.getRevokedAt()).toEqual(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
+
+    const persistedOriginalSession =
+      await repository.findById(sessionId);
+
+    expect(persistedOriginalSession).not.toBeNull();
+
+    expect(persistedOriginalSession?.getRevokedAt()).toEqual(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
+
+    await expect(
+      useCase.execute({
+        refreshToken: originalRefreshToken,
+      }),
+    ).rejects.toThrow(UnauthorizedException);
+
+    expect(session.getRevokedAt()).toEqual(
+      new Date('2026-08-05T10:00:00.000Z'),
+    );
   });
 });

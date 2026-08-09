@@ -15,9 +15,9 @@ describe('JwtAccessTokenVerifier', () => {
 
     const result = await verifier.verify(token);
 
-    expect(result).toEqual({
-      userId: 'user-id',
-    });
+    expect(result.userId).toBe('user-id');
+    expect(result.tokenId).toEqual(expect.any(String));
+    expect(result.expiresAt).toEqual(expect.any(Date));
   });
 
   it('should reject an invalid access token', async () => {

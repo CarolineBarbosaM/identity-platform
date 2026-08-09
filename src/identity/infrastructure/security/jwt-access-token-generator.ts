@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { JwtService } from '@nestjs/jwt';
 
 import type { AccessTokenGenerator } from '../../domain/services/access-token-generator';
@@ -15,6 +16,7 @@ export class JwtAccessTokenGenerator implements AccessTokenGenerator {
     return this.jwtService.signAsync(
       {
         sub: input.userId,
+        jti: randomUUID(),
       },
       {
         expiresIn: '15m',

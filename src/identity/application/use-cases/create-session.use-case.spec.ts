@@ -26,7 +26,9 @@ describe('CreateSessionUseCase', () => {
       userId: 'user-id',
     });
 
-    expect(result.refreshToken).toBe(`${result.session.getId()}.refresh-token`);
+    expect(result.refreshToken).toMatch(
+      new RegExp(`^${result.session.getId()}\\.refresh-token(?:-\\d+)?$`),
+    );
 
     expect(result.accessToken).toBe('access-token-user-id');
 

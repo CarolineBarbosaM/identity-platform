@@ -17,14 +17,14 @@ import { LogoutSessionUseCase } from './application/use-cases/logout-session.use
 import { AuthGuard } from './infrastructure/http/auth.guard';
 import { DatabaseModule } from '../database/database.module';
 import { PostgresSessionRepository } from './infrastructure/database/repositories/postgres-session.repository';
-
-
-import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
-
-import { TOKEN_HASHER } from './domain/services/token-hasher';
 import { FakeRefreshTokenGenerator } from './application/services/fake-refresh-token-generator';
-import { REFRESH_TOKEN_GENERATOR } from './domain/services/refresh-token-generator';
 import { JwtAccessTokenGenerator } from './infrastructure/security/jwt-access-token-generator';
+import { RedisTokenBlacklist } from './infrastructure/security/redis-token-blacklist';
+
+import { TOKEN_BLACKLIST } from './domain/services/token-blacklist';
+import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
+import { TOKEN_HASHER } from './domain/services/token-hasher';
+import { REFRESH_TOKEN_GENERATOR } from './domain/services/refresh-token-generator';
 import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator';
 
 @Module({
@@ -56,6 +56,10 @@ import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator
     { 
       provide: SESSION_REPOSITORY, 
       useClass: PostgresSessionRepository, 
+    },
+    {
+      provide: TOKEN_BLACKLIST,
+      useClass: RedisTokenBlacklist,
     },
     {
       provide: ACCESS_TOKEN_GENERATOR,

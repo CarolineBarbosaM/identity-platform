@@ -11,13 +11,21 @@ export class JwtAccessTokenVerifier implements AccessTokenVerifier {
     });
   }
 
-  async verify(token: string): Promise<{ userId: string }> {
+  async verify(token: string): Promise<{
+    userId: string;
+    tokenId: string;
+    expiresAt: Date;
+  }> {
     const payload = await this.jwtService.verifyAsync<{
       sub: string;
+      jti: string;
+      exp: number;
     }>(token);
 
     return {
       userId: payload.sub,
+      tokenId: payload.jti,
+      expiresAt: new Date(payload.exp * 1000),
     };
   }
 }

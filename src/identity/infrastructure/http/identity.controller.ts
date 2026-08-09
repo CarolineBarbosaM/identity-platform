@@ -70,9 +70,23 @@ export class IdentityController {
 
   @Post('logout')
   @HttpCode(204)
-  async logout(@Body() request: { sessionId: string }): Promise<void> {
+  @UseGuards(AuthGuard)
+  async logout(
+    @Body() body: { sessionId: string },
+    @Req()
+    request: {
+      user: {
+        userId: string;
+        tokenId: string;
+        expiresAt: Date;
+      };
+    },
+  ): Promise<void> {
     await this.logoutSession.execute({
-      sessionId: request.sessionId,
+      sessionId: body.sessionId,
+      userId: request.user.userId,
+      tokenId: request.user.tokenId,
+      expiresAt: request.user.expiresAt,
     });
   }
 
