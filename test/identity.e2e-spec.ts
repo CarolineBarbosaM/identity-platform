@@ -4,9 +4,7 @@ config({
   path: '.env.test',
 });
 
-import {
-  PASSWORD_HASHER,
-} from '../src/identity/domain/services/password-hasher';
+import { PASSWORD_HASHER } from '../src/identity/domain/services/password-hasher';
 
 import type { PasswordHasher } from '../src/identity/domain/services/password-hasher';
 import { INestApplication } from '@nestjs/common';

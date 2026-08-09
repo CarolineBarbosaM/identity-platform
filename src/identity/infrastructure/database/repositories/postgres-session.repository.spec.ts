@@ -21,10 +21,7 @@ describe('PostgresSessionRepository', () => {
       now: jest.fn(() => new Date('2026-08-08T15:00:00.000Z')),
     };
 
-    repository = new PostgresSessionRepository(
-      ormRepository as any,
-      clock,
-    );
+    repository = new PostgresSessionRepository(ormRepository as any, clock);
   });
 
   describe('findById', () => {

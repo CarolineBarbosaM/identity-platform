@@ -10,17 +10,15 @@ import { PasswordCredentialOrmEntity } from '../entities/password-credential.orm
 import { CLOCK } from '../../../../shared/domain/clock';
 import type { Clock } from '../../../../shared/domain/clock';
 
-
-
 @Injectable()
 export class PostgresPasswordCredentialRepository implements PasswordCredentialRepository {
-    constructor(
-        @InjectRepository(PasswordCredentialOrmEntity)
-        private readonly repository: Repository<PasswordCredentialOrmEntity>,
+  constructor(
+    @InjectRepository(PasswordCredentialOrmEntity)
+    private readonly repository: Repository<PasswordCredentialOrmEntity>,
 
-        @Inject(CLOCK)
-        private readonly clock: Clock,
-    ) {}
+    @Inject(CLOCK)
+    private readonly clock: Clock,
+  ) {}
 
   async findByUserId(userId: string): Promise<PasswordCredential | null> {
     const entity = await this.repository.findOne({
@@ -34,15 +32,15 @@ export class PostgresPasswordCredentialRepository implements PasswordCredentialR
     }
 
     return PasswordCredential.rehydrate(
-    {
+      {
         id: entity.id,
         userId: entity.userId,
         passwordHash: entity.passwordHash,
         createdAt: entity.createdAt,
         updatedAt: entity.updatedAt,
-    },
-    this.clock,
-    );  
+      },
+      this.clock,
+    );
   }
 
   async save(credential: PasswordCredential): Promise<void> {

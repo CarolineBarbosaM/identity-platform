@@ -17,9 +17,7 @@ describe('LogoutSessionUseCase', () => {
   it('should revoke a session', async () => {
     const repository = new InMemorySessionRepository();
 
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const session = Session.create(
       {
@@ -33,11 +31,7 @@ describe('LogoutSessionUseCase', () => {
 
     await repository.save(session);
 
-    const useCase = new LogoutSessionUseCase(
-      repository,
-      tokenBlacklist,
-      clock,
-    );
+    const useCase = new LogoutSessionUseCase(repository, tokenBlacklist, clock);
 
     await useCase.execute({
       sessionId: 'session-id',

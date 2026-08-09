@@ -53,9 +53,9 @@ import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator
       provide: PASSWORD_CREDENTIAL_REPOSITORY,
       useClass: PostgresPasswordCredentialRepository,
     },
-    { 
-      provide: SESSION_REPOSITORY, 
-      useClass: PostgresSessionRepository, 
+    {
+      provide: SESSION_REPOSITORY,
+      useClass: PostgresSessionRepository,
     },
     {
       provide: TOKEN_BLACKLIST,

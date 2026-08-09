@@ -186,4 +186,66 @@ describe('AuthGuard', () => {
 
     expect(tokenBlacklist.has).toHaveBeenCalledWith('revoked-token-id');
   });
+
+  it('should attach authenticated user data to the request', async () => {
+    const accessTokenVerifier = {
+      verify: jest.fn().mockResolvedValue({
+      userId: 'user-id',
+      tokenId: 'token-id',
+      expiresAt: new Date('2026-08-08T21:00:00.000Z'),
+    }),
+    } as unknown as AccessTokenVerifier;
+
+    const tokenBlacklist = {
+      has: jest.fn().mockResolvedValue(false),
+    } as unknown as TokenBlacklist;
+
+    const guard = new AuthGuard(
+      accessTokenVerifier,
+      tokenBlacklist,
+    );
+
+    const request: {
+      headers: {
+        authorization: string;
+      };
+      user: {
+        userId: string;
+        tokenId: string;
+        expiresAt: Date;
+      };
+      } = {
+      headers: {
+        authorization: 'Bearer access-token',
+      },
+      user: {
+        userId: '',
+        tokenId: '',
+        expiresAt: new Date(0),
+      },
+    };
+
+
+    const context = {
+      switchToHttp: () => ({
+      getRequest: () => request,
+    }),
+    } as unknown as ExecutionContext;
+
+    const result = await guard.canActivate(context);
+
+    expect(result).toBe(true);
+
+    expect(accessTokenVerifier.verify).toHaveBeenCalledWith(
+      'access-token',
+    );
+
+    expect(tokenBlacklist.has).toHaveBeenCalledWith('token-id');
+
+    expect(request.user).toEqual({
+      userId: 'user-id',
+      tokenId: 'token-id',
+      expiresAt: new Date('2026-08-08T21:00:00.000Z'),
+    });
+  });
 });

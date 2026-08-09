@@ -42,19 +42,14 @@ export class RefreshSessionUseCase {
     private readonly clock: Clock,
   ) {}
 
-  async execute(
-    input: RefreshSessionInput,
-  ): Promise<RefreshSessionOutput> {
+  async execute(input: RefreshSessionInput): Promise<RefreshSessionOutput> {
     const separatorIndex = input.refreshToken.indexOf('.');
 
     if (separatorIndex <= 0) {
       throw new UnauthorizedException();
     }
 
-    const sessionId = input.refreshToken.substring(
-      0,
-      separatorIndex,
-    );
+    const sessionId = input.refreshToken.substring(0, separatorIndex);
 
     const session = await this.sessionRepository.findById(sessionId);
 
@@ -66,10 +61,7 @@ export class RefreshSessionUseCase {
       throw new UnauthorizedException();
     }
 
-    if (
-      session.getExpiresAt().getTime() <=
-      this.clock.now().getTime()
-    ) {
+    if (session.getExpiresAt().getTime() <= this.clock.now().getTime()) {
       throw new UnauthorizedException();
     }
 
@@ -98,18 +90,14 @@ export class RefreshSessionUseCase {
 
     const newSessionId = randomUUID();
 
-    const newRefreshTokenSecret =
-      await this.refreshTokenGenerator.generate();
+    const newRefreshTokenSecret = await this.refreshTokenGenerator.generate();
 
-    const newRefreshToken =
-      `${newSessionId}.${newRefreshTokenSecret}`;
+    const newRefreshToken = `${newSessionId}.${newRefreshTokenSecret}`;
 
-    const newRefreshTokenHash =
-      await this.tokenHasher.hash(newRefreshToken);
+    const newRefreshTokenHash = await this.tokenHasher.hash(newRefreshToken);
 
     const newExpiresAt = new Date(
-      this.clock.now().getTime() +
-        30 * 24 * 60 * 60 * 1000,
+      this.clock.now().getTime() + 30 * 24 * 60 * 60 * 1000,
     );
 
     const newSession = Session.create(
@@ -124,10 +112,9 @@ export class RefreshSessionUseCase {
 
     await this.sessionRepository.save(newSession);
 
-    const newAccessToken =
-      await this.accessTokenGenerator.generate({
-        userId: session.getUserId(),
-      });
+    const newAccessToken = await this.accessTokenGenerator.generate({
+      userId: session.getUserId(),
+    });
 
     return {
       accessToken: newAccessToken,

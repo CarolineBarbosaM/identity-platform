@@ -10,9 +10,7 @@ import { Session } from '../../domain/entities/session.entity';
 describe('RefreshSessionUseCase', () => {
   it('should refresh a valid session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const refreshTokenGenerator = new FakeRefreshTokenGenerator();
     const tokenHasher = new FakeTokenHasher();
@@ -80,9 +78,7 @@ describe('RefreshSessionUseCase', () => {
 
   it('should reject when session does not exist', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const useCase = new RefreshSessionUseCase(
       repository,
@@ -101,9 +97,7 @@ describe('RefreshSessionUseCase', () => {
 
   it('should reject a revoked session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const session = Session.create(
       {
@@ -136,9 +130,7 @@ describe('RefreshSessionUseCase', () => {
 
   it('should reject an expired session', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const session = Session.create(
       {
@@ -169,9 +161,7 @@ describe('RefreshSessionUseCase', () => {
 
   it('should revoke the session when refresh token is invalid', async () => {
     const repository = new InMemorySessionRepository();
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const session = Session.create(
       {
@@ -207,9 +197,7 @@ describe('RefreshSessionUseCase', () => {
   it('should reject when a refresh token is reused', async () => {
     const repository = new InMemorySessionRepository();
 
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
     const refreshTokenGenerator = new FakeRefreshTokenGenerator();
     const tokenHasher = new FakeTokenHasher();
@@ -246,8 +234,7 @@ describe('RefreshSessionUseCase', () => {
       new Date('2026-08-05T10:00:00.000Z'),
     );
 
-    const persistedOriginalSession =
-      await repository.findById(sessionId);
+    const persistedOriginalSession = await repository.findById(sessionId);
 
     expect(persistedOriginalSession).not.toBeNull();
 

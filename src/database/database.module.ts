@@ -16,7 +16,7 @@ import { PasswordCredentialOrmEntity } from '../identity/infrastructure/database
       synchronize: false,
     }),
 
-    TypeOrmModule.forFeature([ PasswordCredentialOrmEntity, SessionOrmEntity, ]),
+    TypeOrmModule.forFeature([PasswordCredentialOrmEntity, SessionOrmEntity]),
   ],
   exports: [TypeOrmModule],
 })

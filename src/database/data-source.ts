@@ -11,9 +11,6 @@ export default new DataSource({
   username: process.env.DATABASE_USER ?? 'postgres',
   password: process.env.DATABASE_PASSWORD ?? 'postgres',
   database: process.env.DATABASE_NAME ?? 'identity',
-  entities: [
-    PasswordCredentialOrmEntity,
-    SessionOrmEntity,
-  ],
+  entities: [PasswordCredentialOrmEntity, SessionOrmEntity],
   migrations: ['src/database/migrations/*.ts'],
 });

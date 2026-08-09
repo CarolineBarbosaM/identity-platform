@@ -48,9 +48,7 @@ describe('RedisTokenBlacklist', () => {
 
     expect(result).toBe(true);
 
-    expect(redis.exists).toHaveBeenCalledWith(
-      'token:blacklist:token-id',
-    );
+    expect(redis.exists).toHaveBeenCalledWith('token:blacklist:token-id');
   });
 
   it('should return false when the token is not blacklisted', async () => {
@@ -65,8 +63,6 @@ describe('RedisTokenBlacklist', () => {
 
     expect(result).toBe(false);
 
-    expect(redis.exists).toHaveBeenCalledWith(
-      'token:blacklist:token-id',
-    );
+    expect(redis.exists).toHaveBeenCalledWith('token:blacklist:token-id');
   });
 });

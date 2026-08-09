@@ -51,7 +51,7 @@ export class AuthGuard implements CanActivate {
         tokenId: payload.tokenId,
         expiresAt: payload.expiresAt,
       };
-      
+
       return true;
     } catch {
       throw new UnauthorizedException();

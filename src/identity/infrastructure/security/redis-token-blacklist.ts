@@ -21,12 +21,7 @@ export class RedisTokenBlacklist implements TokenBlacklist {
       return;
     }
 
-    await this.redis.set(
-      this.getKey(tokenId),
-      '1',
-      'EX',
-      ttl,
-    );
+    await this.redis.set(this.getKey(tokenId), '1', 'EX', ttl);
   }
 
   async has(tokenId: string): Promise<boolean> {

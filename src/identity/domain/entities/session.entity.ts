@@ -82,10 +82,7 @@ export class Session {
     this.updatedAt = now;
   }
 
-  static rehydrate(
-    props: RehydrateSessionProps,
-    clock: Clock,
-  ): Session {
+  static rehydrate(props: RehydrateSessionProps, clock: Clock): Session {
     return new Session(
       props.id,
       props.userId,
