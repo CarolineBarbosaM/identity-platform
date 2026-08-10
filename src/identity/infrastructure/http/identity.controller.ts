@@ -1,17 +1,19 @@
 import {
   Body,
   Controller,
+  Get,
   HttpCode,
   Post,
+  Req,
   UnauthorizedException,
   UseGuards,
-  Get,
-  Req,
 } from '@nestjs/common';
+
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
+
 import { AuthGuard } from './auth.guard';
 
 export interface AuthenticateRequest {
@@ -30,15 +32,25 @@ export class IdentityController {
 
   @Post('login')
   @HttpCode(200)
-  async authenticate(@Body() request: AuthenticateRequest): Promise<{
+  async authenticate(
+    @Body() request: AuthenticateRequest,
+    @Req()
+    httpRequest: {
+      headers: {
+        'user-agent'?: string;
+      };
+      ip?: string;
+    },
+  ): Promise<{
     authenticated: boolean;
     accessToken: string;
     refreshToken: string;
   }> {
-    const authenticated = await this.authenticateUser.execute({
-      userId: request.userId,
-      password: request.password,
-    });
+    const authenticated =
+      await this.authenticateUser.execute({
+        userId: request.userId,
+        password: request.password,
+      });
 
     if (!authenticated) {
       throw new UnauthorizedException({
@@ -46,9 +58,20 @@ export class IdentityController {
       });
     }
 
-    const { accessToken, refreshToken } = await this.createSession.execute({
-      userId: request.userId,
-    });
+    const userAgent =
+      httpRequest.headers['user-agent'] ??
+      'unknown';
+
+    const ipAddress =
+      httpRequest.ip ?? 'unknown';
+
+    const { accessToken, refreshToken } =
+      await this.createSession.execute({
+        userId: request.userId,
+        deviceName: userAgent,
+        userAgent,
+        ipAddress,
+      });
 
     return {
       authenticated: true,
@@ -59,7 +82,11 @@ export class IdentityController {
 
   @Post('refresh')
   @HttpCode(200)
-  async refresh(@Body() request: { refreshToken: string }): Promise<{
+  async refresh(
+    @Body() request: {
+      refreshToken: string;
+    },
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
@@ -72,7 +99,9 @@ export class IdentityController {
   @HttpCode(204)
   @UseGuards(AuthGuard)
   async logout(
-    @Body() body: { sessionId: string },
+    @Body() body: {
+      sessionId: string;
+    },
     @Req()
     request: {
       user: {

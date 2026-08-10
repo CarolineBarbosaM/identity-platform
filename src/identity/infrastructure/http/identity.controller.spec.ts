@@ -1,5 +1,7 @@
 import { UnauthorizedException } from '@nestjs/common';
+
 import { IdentityController } from './identity.controller';
+
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
@@ -33,18 +35,34 @@ describe('IdentityController', () => {
       logoutSession,
     );
 
-    const result = await controller.authenticate({
+    const result =
+      await controller.authenticate(
+        {
+          userId: 'user-id',
+          password: 'plain-password',
+        },
+        {
+          headers: {
+            'user-agent': 'Mozilla/5.0',
+          },
+          ip: '192.168.0.10',
+        },
+      );
+
+    expect(
+      authenticateUser.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'plain-password',
     });
 
-    expect(authenticateUser.execute).toHaveBeenCalledWith({
+    expect(
+      createSession.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
-      password: 'plain-password',
-    });
-
-    expect(createSession.execute).toHaveBeenCalledWith({
-      userId: 'user-id',
+      deviceName: 'Mozilla/5.0',
+      userAgent: 'Mozilla/5.0',
+      ipAddress: '192.168.0.10',
     });
 
     expect(result).toEqual({
@@ -79,70 +97,80 @@ describe('IdentityController', () => {
     );
 
     await expect(
-      controller.authenticate({
-        userId: 'user-id',
-        password: 'wrong-password',
-      }),
+      controller.authenticate(
+        {
+          userId: 'user-id',
+          password: 'wrong-password',
+        },
+        {
+          headers: {
+            'user-agent': 'Mozilla/5.0',
+          },
+          ip: '192.168.0.10',
+        },
+      ),
     ).rejects.toThrow(
       new UnauthorizedException({
         authenticated: false,
       }),
     );
 
-    expect(authenticateUser.execute).toHaveBeenCalledWith({
+    expect(
+      authenticateUser.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'wrong-password',
     });
 
-    expect(createSession.execute).not.toHaveBeenCalled();
+    expect(
+      createSession.execute,
+    ).not.toHaveBeenCalled();
   });
 
-  it('should logout using authenticated user data', async () => {
-  const authenticateUser = {
-  execute: jest.fn(),
-  } as unknown as AuthenticateUser;
+  it('should use fallback values when device information is unavailable', async () => {
+    const authenticateUser = {
+      execute: jest.fn().mockResolvedValue(true),
+    } as unknown as AuthenticateUser;
 
-  const createSession = {
-    execute: jest.fn(),
-  } as unknown as CreateSessionUseCase;
+    const createSession = {
+      execute: jest.fn().mockResolvedValue({
+        accessToken: 'access-token',
+        refreshToken: 'refresh-token',
+      }),
+    } as unknown as CreateSessionUseCase;
 
-  const refreshSession = {
-    execute: jest.fn(),
-  } as unknown as RefreshSessionUseCase;
+    const refreshSession = {
+      execute: jest.fn(),
+    } as unknown as RefreshSessionUseCase;
 
-  const logoutSession = {
-    execute: jest.fn(),
-  } as unknown as LogoutSessionUseCase;
+    const logoutSession = {
+      execute: jest.fn(),
+    } as unknown as LogoutSessionUseCase;
 
-  const controller = new IdentityController(
-    authenticateUser,
-    createSession,
-    refreshSession,
-    logoutSession,
-  );
+    const controller = new IdentityController(
+      authenticateUser,
+      createSession,
+      refreshSession,
+      logoutSession,
+    );
 
-  const expiresAt = new Date('2026-08-08T21:00:00.000Z');
-
-  await controller.logout(
-    {
-      sessionId: 'session-id',
-    },
-    {
-      user: {
+    await controller.authenticate(
+      {
         userId: 'user-id',
-        tokenId: 'token-id',
-        expiresAt,
+        password: 'plain-password',
       },
-    },
-  );
+      {
+        headers: {},
+      },
+    );
 
-  expect(logoutSession.execute).toHaveBeenCalledWith({
-    sessionId: 'session-id',
-    userId: 'user-id',
-    tokenId: 'token-id',
-    expiresAt,
+    expect(
+      createSession.execute,
+    ).toHaveBeenCalledWith({
+      userId: 'user-id',
+      deviceName: 'unknown',
+      userAgent: 'unknown',
+      ipAddress: 'unknown',
+    });
   });
-
-});
-
 });

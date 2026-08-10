@@ -4,6 +4,8 @@ import { AuthenticateUser } from './application/use-cases/authenticate-user.use-
 import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
 import { JwtAccessTokenVerifier } from './infrastructure/security/jwt-access-token-verifier';
 import { PostgresPasswordCredentialRepository } from './infrastructure/database/repositories/postgres-password-credential.repository';
+import { PostgresDeviceRepository } from './infrastructure/database/repositories/postgres-device.repository';
+import { DEVICE_REPOSITORY } from './domain/repositories/device.repository';
 import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
 import { PASSWORD_HASHER } from './domain/services/password-hasher';
 import { PASSWORD_CREDENTIAL_REPOSITORY } from './domain/repositories/password-credential.repository';
@@ -56,6 +58,10 @@ import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator
     {
       provide: SESSION_REPOSITORY,
       useClass: PostgresSessionRepository,
+    },
+    {
+      provide: DEVICE_REPOSITORY,
+      useClass: PostgresDeviceRepository,
     },
     {
       provide: TOKEN_BLACKLIST,
