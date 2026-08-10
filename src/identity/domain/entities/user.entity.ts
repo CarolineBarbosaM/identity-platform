@@ -8,7 +8,7 @@ export interface CreateUserProps {
 }
 
 export class User {
-    private constructor(
+  private constructor(
     private readonly id: string,
     private readonly name: string,
     private readonly email: string,
