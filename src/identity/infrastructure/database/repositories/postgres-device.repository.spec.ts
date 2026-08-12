@@ -8,9 +8,7 @@ describe('PostgresDeviceRepository', () => {
 
     const repository = {
       save: jest.fn(async (entity) => {
-        const index = storedEntities.findIndex(
-          (item) => item.id === entity.id,
-        );
+        const index = storedEntities.findIndex((item) => item.id === entity.id);
 
         if (index >= 0) {
           storedEntities[index] = entity;
@@ -22,11 +20,7 @@ describe('PostgresDeviceRepository', () => {
       }),
 
       findOne: jest.fn(async ({ where }) => {
-        return (
-          storedEntities.find(
-            (entity) => entity.id === where.id,
-          ) ?? null
-        );
+        return storedEntities.find((entity) => entity.id === where.id) ?? null;
       }),
 
       find: jest.fn(async ({ where }) => {
@@ -36,26 +30,17 @@ describe('PostgresDeviceRepository', () => {
       }),
     } as any;
 
-    const clock = new FakeClock(
-      new Date('2026-08-10T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-10T10:00:00.000Z'));
 
     return {
       repository,
       clock,
-      postgresRepository: new PostgresDeviceRepository(
-        repository,
-        clock,
-      ),
+      postgresRepository: new PostgresDeviceRepository(repository, clock),
     };
   };
 
   it('should save and find a device by id', async () => {
-    const {
-      repository,
-      clock,
-      postgresRepository,
-    } = createRepository();
+    const { repository, clock, postgresRepository } = createRepository();
 
     const device = Device.create(
       {
@@ -70,9 +55,7 @@ describe('PostgresDeviceRepository', () => {
 
     await postgresRepository.save(device);
 
-    const result = await postgresRepository.findById(
-      'device-id',
-    );
+    const result = await postgresRepository.findById('device-id');
 
     expect(repository.save).toHaveBeenCalledWith({
       id: 'device-id',
@@ -91,21 +74,15 @@ describe('PostgresDeviceRepository', () => {
     expect(result?.getName()).toBe('Chrome - Windows');
     expect(result?.getUserAgent()).toBe('Mozilla/5.0');
     expect(result?.getIpAddress()).toBe('192.168.0.10');
-    expect(result?.getCreatedAt()).toEqual(
-      device.getCreatedAt(),
-    );
-    expect(result?.getLastSeenAt()).toEqual(
-      device.getLastSeenAt(),
-    );
+    expect(result?.getCreatedAt()).toEqual(device.getCreatedAt());
+    expect(result?.getLastSeenAt()).toEqual(device.getLastSeenAt());
     expect(result?.getRevokedAt()).toBeNull();
   });
 
   it('should return null when device does not exist', async () => {
-    const { repository, postgresRepository } =
-      createRepository();
+    const { repository, postgresRepository } = createRepository();
 
-    const result =
-      await postgresRepository.findById('unknown-device');
+    const result = await postgresRepository.findById('unknown-device');
 
     expect(repository.findOne).toHaveBeenCalledWith({
       where: {
@@ -117,11 +94,7 @@ describe('PostgresDeviceRepository', () => {
   });
 
   it('should find devices by user id', async () => {
-    const {
-      repository,
-      clock,
-      postgresRepository,
-    } = createRepository();
+    const { repository, clock, postgresRepository } = createRepository();
 
     const deviceOne = Device.create(
       {
@@ -160,8 +133,7 @@ describe('PostgresDeviceRepository', () => {
     await postgresRepository.save(deviceTwo);
     await postgresRepository.save(otherUserDevice);
 
-    const result =
-      await postgresRepository.findByUserId('user-id');
+    const result = await postgresRepository.findByUserId('user-id');
 
     expect(repository.find).toHaveBeenCalledWith({
       where: {
@@ -171,28 +143,22 @@ describe('PostgresDeviceRepository', () => {
 
     expect(result).toHaveLength(2);
 
-    expect(
-      result.map((device) => device.getId()),
-    ).toEqual([
+    expect(result.map((device) => device.getId())).toEqual([
       'device-one',
       'device-two',
     ]);
 
-    expect(
-      result.every(
-        (device) => device.getUserId() === 'user-id',
-      ),
-    ).toBe(true);
+    expect(result.every((device) => device.getUserId() === 'user-id')).toBe(
+      true,
+    );
   });
 
   it('should return an empty array when user has no devices', async () => {
-    const { repository, postgresRepository } =
-      createRepository();
+    const { repository, postgresRepository } = createRepository();
 
-    const result =
-      await postgresRepository.findByUserId(
-        'user-without-devices',
-      );
+    const result = await postgresRepository.findByUserId(
+      'user-without-devices',
+    );
 
     expect(repository.find).toHaveBeenCalledWith({
       where: {
@@ -204,10 +170,7 @@ describe('PostgresDeviceRepository', () => {
   });
 
   it('should update an existing device when saving it again', async () => {
-    const {
-      clock,
-      postgresRepository,
-    } = createRepository();
+    const { clock, postgresRepository } = createRepository();
 
     const device = Device.create(
       {
@@ -222,16 +185,13 @@ describe('PostgresDeviceRepository', () => {
 
     await postgresRepository.save(device);
 
-    clock.setNow(
-      new Date('2026-08-10T11:00:00.000Z'),
-    );
+    clock.setNow(new Date('2026-08-10T11:00:00.000Z'));
 
     device.updateLastSeen();
 
     await postgresRepository.save(device);
 
-    const result =
-      await postgresRepository.findById('device-id');
+    const result = await postgresRepository.findById('device-id');
 
     expect(result?.getLastSeenAt()).toEqual(
       new Date('2026-08-10T11:00:00.000Z'),
@@ -239,10 +199,7 @@ describe('PostgresDeviceRepository', () => {
   });
 
   it('should persist a revoked device', async () => {
-    const {
-      clock,
-      postgresRepository,
-    } = createRepository();
+    const { clock, postgresRepository } = createRepository();
 
     const device = Device.create(
       {
@@ -259,8 +216,7 @@ describe('PostgresDeviceRepository', () => {
 
     await postgresRepository.save(device);
 
-    const result =
-      await postgresRepository.findById('device-id');
+    const result = await postgresRepository.findById('device-id');
 
     expect(result?.getRevokedAt()).toEqual(
       new Date('2026-08-10T10:00:00.000Z'),

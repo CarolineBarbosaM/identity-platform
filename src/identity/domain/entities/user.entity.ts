@@ -106,4 +106,28 @@ export class User {
   getEmailVerifiedAt(): Date | null {
     return this.emailVerifiedAt;
   }
+
+  static rehydrate(
+    props: {
+      id: string;
+      name: string;
+      email: string;
+      status: UserStatus;
+      emailVerifiedAt: Date | null;
+      createdAt: Date;
+      updatedAt: Date;
+    },
+    clock: Clock,
+  ): User {
+    return new User(
+      props.id,
+      props.name,
+      props.email,
+      props.status,
+      props.createdAt,
+      props.updatedAt,
+      props.emailVerifiedAt,
+      clock,
+    );
+  }
 }

@@ -57,30 +57,23 @@ export class CreateSessionUseCase {
     private readonly accessTokenGenerator: AccessTokenGenerator,
   ) {}
 
-  async execute(
-    input: CreateSessionInput,
-  ): Promise<CreateSessionOutput> {
+  async execute(input: CreateSessionInput): Promise<CreateSessionOutput> {
     const sessionId = randomUUID();
     const deviceId = randomUUID();
 
-    const refreshTokenSecret =
-      await this.refreshTokenGenerator.generate();
+    const refreshTokenSecret = await this.refreshTokenGenerator.generate();
 
-    const refreshToken =
-      `${sessionId}.${refreshTokenSecret}`;
+    const refreshToken = `${sessionId}.${refreshTokenSecret}`;
 
-    const accessToken =
-      await this.accessTokenGenerator.generate({
-        userId: input.userId,
-      });
+    const accessToken = await this.accessTokenGenerator.generate({
+      userId: input.userId,
+    });
 
     const expiresAt = new Date(
-      this.clock.now().getTime() +
-        30 * 24 * 60 * 60 * 1000,
+      this.clock.now().getTime() + 30 * 24 * 60 * 60 * 1000,
     );
 
-    const refreshTokenHash =
-      await this.tokenHasher.hash(refreshToken);
+    const refreshTokenHash = await this.tokenHasher.hash(refreshToken);
 
     const session = Session.create(
       {

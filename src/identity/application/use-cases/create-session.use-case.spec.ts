@@ -8,23 +8,17 @@ import { FakeAccessTokenGenerator } from '../services/fake-access-token-generato
 
 describe('CreateSessionUseCase', () => {
   it('should create a session and device', async () => {
-    const sessionRepository =
-      new InMemorySessionRepository();
+    const sessionRepository = new InMemorySessionRepository();
 
-    const deviceRepository =
-      new InMemoryDeviceRepository();
+    const deviceRepository = new InMemoryDeviceRepository();
 
-    const clock = new FakeClock(
-      new Date('2026-08-05T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-05T10:00:00.000Z'));
 
-    const tokenGenerator =
-      new FakeRefreshTokenGenerator();
+    const tokenGenerator = new FakeRefreshTokenGenerator();
 
     const tokenHasher = new FakeTokenHasher();
 
-    const accessTokenGenerator =
-      new FakeAccessTokenGenerator();
+    const accessTokenGenerator = new FakeAccessTokenGenerator();
 
     const useCase = new CreateSessionUseCase(
       sessionRepository,
@@ -43,52 +37,32 @@ describe('CreateSessionUseCase', () => {
     });
 
     expect(result.refreshToken).toMatch(
-      new RegExp(
-        `^${result.session.getId()}\\.refresh-token(?:-\\d+)?$`,
-      ),
+      new RegExp(`^${result.session.getId()}\\.refresh-token(?:-\\d+)?$`),
     );
 
-    expect(result.accessToken).toBe(
-      'access-token-user-id',
-    );
+    expect(result.accessToken).toBe('access-token-user-id');
 
-    expect(result.session.getUserId()).toBe(
-      'user-id',
-    );
+    expect(result.session.getUserId()).toBe('user-id');
 
-    expect(result.device.getUserId()).toBe(
-      'user-id',
-    );
+    expect(result.device.getUserId()).toBe('user-id');
 
-    expect(result.device.getName()).toBe(
-      'Chrome - Windows',
-    );
+    expect(result.device.getName()).toBe('Chrome - Windows');
 
-    expect(result.device.getUserAgent()).toBe(
-      'Mozilla/5.0',
-    );
+    expect(result.device.getUserAgent()).toBe('Mozilla/5.0');
 
-    expect(result.device.getIpAddress()).toBe(
-      '192.168.0.10',
-    );
+    expect(result.device.getIpAddress()).toBe('192.168.0.10');
 
-    const storedSession =
-      await sessionRepository.findById(
-        result.session.getId(),
-      );
+    const storedSession = await sessionRepository.findById(
+      result.session.getId(),
+    );
 
     expect(storedSession).toBe(result.session);
 
-    expect(
-      result.session.getRefreshTokenHash(),
-    ).toBe(
+    expect(result.session.getRefreshTokenHash()).toBe(
       `hashed-${result.refreshToken}`,
     );
 
-    const storedDevice =
-      await deviceRepository.findById(
-        result.device.getId(),
-      );
+    const storedDevice = await deviceRepository.findById(result.device.getId());
 
     expect(storedDevice).toBe(result.device);
   });

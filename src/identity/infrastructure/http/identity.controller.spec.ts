@@ -35,30 +35,25 @@ describe('IdentityController', () => {
       logoutSession,
     );
 
-    const result =
-      await controller.authenticate(
-        {
-          userId: 'user-id',
-          password: 'plain-password',
+    const result = await controller.authenticate(
+      {
+        userId: 'user-id',
+        password: 'plain-password',
+      },
+      {
+        headers: {
+          'user-agent': 'Mozilla/5.0',
         },
-        {
-          headers: {
-            'user-agent': 'Mozilla/5.0',
-          },
-          ip: '192.168.0.10',
-        },
-      );
+        ip: '192.168.0.10',
+      },
+    );
 
-    expect(
-      authenticateUser.execute,
-    ).toHaveBeenCalledWith({
+    expect(authenticateUser.execute).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'plain-password',
     });
 
-    expect(
-      createSession.execute,
-    ).toHaveBeenCalledWith({
+    expect(createSession.execute).toHaveBeenCalledWith({
       userId: 'user-id',
       deviceName: 'Mozilla/5.0',
       userAgent: 'Mozilla/5.0',
@@ -115,16 +110,12 @@ describe('IdentityController', () => {
       }),
     );
 
-    expect(
-      authenticateUser.execute,
-    ).toHaveBeenCalledWith({
+    expect(authenticateUser.execute).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'wrong-password',
     });
 
-    expect(
-      createSession.execute,
-    ).not.toHaveBeenCalled();
+    expect(createSession.execute).not.toHaveBeenCalled();
   });
 
   it('should use fallback values when device information is unavailable', async () => {
@@ -164,9 +155,7 @@ describe('IdentityController', () => {
       },
     );
 
-    expect(
-      createSession.execute,
-    ).toHaveBeenCalledWith({
+    expect(createSession.execute).toHaveBeenCalledWith({
       userId: 'user-id',
       deviceName: 'unknown',
       userAgent: 'unknown',

@@ -1,4 +1,5 @@
 import { Module } from '@nestjs/common';
+import { TypeOrmModule } from '@nestjs/typeorm';
 import { IdentityController } from './infrastructure/http/identity.controller';
 import { AuthenticateUser } from './application/use-cases/authenticate-user.use-case';
 import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
@@ -22,7 +23,10 @@ import { PostgresSessionRepository } from './infrastructure/database/repositorie
 import { FakeRefreshTokenGenerator } from './application/services/fake-refresh-token-generator';
 import { JwtAccessTokenGenerator } from './infrastructure/security/jwt-access-token-generator';
 import { RedisTokenBlacklist } from './infrastructure/security/redis-token-blacklist';
+import { UserOrmEntity } from './infrastructure/database/entities/user.orm-entity';
+import { PostgresUserRepository } from './infrastructure/database/repositories/postgres-user.repository';
 
+import { USER_REPOSITORY } from './domain/repositories/user.repository';
 import { TOKEN_BLACKLIST } from './domain/services/token-blacklist';
 import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
 import { TOKEN_HASHER } from './domain/services/token-hasher';
@@ -30,7 +34,12 @@ import { REFRESH_TOKEN_GENERATOR } from './domain/services/refresh-token-generat
 import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator';
 
 @Module({
-  imports: [DatabaseModule],
+  imports: [
+    DatabaseModule,
+    TypeOrmModule.forFeature([
+      UserOrmEntity,
+    ]),
+  ],
   controllers: [IdentityController],
   providers: [
     AuthenticateUser,
@@ -39,42 +48,58 @@ import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator
     RefreshSessionUseCase,
     LogoutSessionUseCase,
     AuthGuard,
+
     {
       provide: PASSWORD_HASHER,
       useClass: Argon2PasswordHasher,
     },
+
     {
       provide: TOKEN_HASHER,
       useClass: Argon2TokenHasher,
     },
+
     {
       provide: REFRESH_TOKEN_GENERATOR,
       useClass: FakeRefreshTokenGenerator,
     },
+
     {
       provide: PASSWORD_CREDENTIAL_REPOSITORY,
       useClass: PostgresPasswordCredentialRepository,
     },
+
     {
       provide: SESSION_REPOSITORY,
       useClass: PostgresSessionRepository,
     },
+
     {
-      provide: DEVICE_REPOSITORY,
-      useClass: PostgresDeviceRepository,
+      provide: USER_REPOSITORY,
+      useClass: PostgresUserRepository,
     },
+
     {
       provide: TOKEN_BLACKLIST,
       useClass: RedisTokenBlacklist,
     },
+
     {
       provide: ACCESS_TOKEN_GENERATOR,
-      useFactory: () => new JwtAccessTokenGenerator('development-secret'),
+      useFactory: () =>
+        new JwtAccessTokenGenerator(
+          'development-secret',
+        ),
     },
+
     {
       provide: ACCESS_TOKEN_VERIFIER,
-      useFactory: () => new JwtAccessTokenVerifier('development-secret'),
+      useFactory: () =>
+        new JwtAccessTokenVerifier(
+          'development-secret',
+        ),
     },
+
     {
       provide: CLOCK,
       useClass: SystemClock,

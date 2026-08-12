@@ -46,11 +46,10 @@ export class IdentityController {
     accessToken: string;
     refreshToken: string;
   }> {
-    const authenticated =
-      await this.authenticateUser.execute({
-        userId: request.userId,
-        password: request.password,
-      });
+    const authenticated = await this.authenticateUser.execute({
+      userId: request.userId,
+      password: request.password,
+    });
 
     if (!authenticated) {
       throw new UnauthorizedException({
@@ -58,20 +57,16 @@ export class IdentityController {
       });
     }
 
-    const userAgent =
-      httpRequest.headers['user-agent'] ??
-      'unknown';
+    const userAgent = httpRequest.headers['user-agent'] ?? 'unknown';
 
-    const ipAddress =
-      httpRequest.ip ?? 'unknown';
+    const ipAddress = httpRequest.ip ?? 'unknown';
 
-    const { accessToken, refreshToken } =
-      await this.createSession.execute({
-        userId: request.userId,
-        deviceName: userAgent,
-        userAgent,
-        ipAddress,
-      });
+    const { accessToken, refreshToken } = await this.createSession.execute({
+      userId: request.userId,
+      deviceName: userAgent,
+      userAgent,
+      ipAddress,
+    });
 
     return {
       authenticated: true,
@@ -82,11 +77,7 @@ export class IdentityController {
 
   @Post('refresh')
   @HttpCode(200)
-  async refresh(
-    @Body() request: {
-      refreshToken: string;
-    },
-  ): Promise<{
+  async refresh(@Body() request: { refreshToken: string }): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
@@ -99,7 +90,8 @@ export class IdentityController {
   @HttpCode(204)
   @UseGuards(AuthGuard)
   async logout(
-    @Body() body: {
+    @Body()
+    body: {
       sessionId: string;
     },
     @Req()
