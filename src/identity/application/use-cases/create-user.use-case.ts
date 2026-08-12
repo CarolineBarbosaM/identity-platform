@@ -35,6 +35,8 @@ import type {
 
 import { PasswordCredential } from '../../domain/entities/password-credential.entity';
 
+import { CreateEmailVerificationTokenUseCase } from './create-email-verification-token.use-case';
+
 export interface CreateUserInput {
   name: string;
   email: string;
@@ -58,6 +60,8 @@ export class CreateUserUseCase {
 
     @Inject(CLOCK)
     private readonly clock: Clock,
+
+    private readonly createEmailVerificationToken: CreateEmailVerificationTokenUseCase,
   ) {}
 
   async execute(
@@ -103,6 +107,10 @@ export class CreateUserUseCase {
     await this.passwordCredentialRepository.save(
       passwordCredential,
     );
+
+    await this.createEmailVerificationToken.execute({
+      userId: user.getId(),
+    });
 
     return {
       user,
