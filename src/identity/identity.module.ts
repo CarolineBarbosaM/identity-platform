@@ -8,13 +8,17 @@ import { CreatePasswordCredential } from './application/use-cases/create-passwor
 import { CreateSessionUseCase } from './application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from './application/use-cases/logout-session.use-case';
+import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
 import { CreateEmailVerificationTokenUseCase } from './application/use-cases/create-email-verification-token.use-case';
 import { VerifyEmailUseCase } from './application/use-cases/verify-email.use-case';
+import { ResetPasswordUseCase } from './application/use-cases/reset-password.use-case';
 
 import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
 import { Argon2TokenHasher } from './infrastructure/security/argon2-token-hasher';
+
 import { JwtAccessTokenVerifier } from './infrastructure/security/jwt-access-token-verifier';
 import { JwtAccessTokenGenerator } from './infrastructure/security/jwt-access-token-generator';
+
 import { RedisTokenBlacklist } from './infrastructure/security/redis-token-blacklist';
 
 import { PostgresPasswordCredentialRepository } from './infrastructure/database/repositories/postgres-password-credential.repository';
@@ -22,39 +26,43 @@ import { PostgresSessionRepository } from './infrastructure/database/repositorie
 import { PostgresUserRepository } from './infrastructure/database/repositories/postgres-user.repository';
 import { PostgresDeviceRepository } from './infrastructure/database/repositories/postgres-device.repository';
 import { PostgresEmailVerificationTokenRepository } from './infrastructure/database/repositories/postgres-email-verification-token.repository';
+import { PostgresPasswordResetTokenRepository } from './infrastructure/database/repositories/postgres-password-reset-token.repository';
 
 import { UserOrmEntity } from './infrastructure/database/entities/user.orm-entity';
 import { EmailVerificationTokenOrmEntity } from './infrastructure/database/entities/email-verification-token.orm-entity';
-import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
-
-import { DEVICE_REPOSITORY } from './domain/repositories/device.repository';
-import { USER_REPOSITORY } from './domain/repositories/user.repository';
-import { PASSWORD_CREDENTIAL_REPOSITORY } from './domain/repositories/password-credential.repository';
-import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
-import { EMAIL_VERIFICATION_TOKEN_REPOSITORY } from './domain/repositories/email-verification-token.repository';
-
-import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
-import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator';
-import { PASSWORD_HASHER } from './domain/services/password-hasher';
-import { TOKEN_HASHER } from './domain/services/token-hasher';
-import { TOKEN_BLACKLIST } from './domain/services/token-blacklist';
-import { REFRESH_TOKEN_GENERATOR } from './domain/services/refresh-token-generator';
-
-import { CLOCK } from '../shared/domain/clock';
-import { SystemClock } from '../shared/infrastructure/system-clock';
-
-import { DatabaseModule } from '../database/database.module';
+import { PasswordResetTokenOrmEntity } from './infrastructure/database/entities/password-reset-token.orm-entity';
 
 import { FakeRefreshTokenGenerator } from './application/services/fake-refresh-token-generator';
 
 import { AuthGuard } from './infrastructure/http/auth.guard';
 
+import { DatabaseModule } from '../database/database.module';
+
+import { CLOCK } from '../shared/domain/clock';
+import { SystemClock } from '../shared/infrastructure/system-clock';
+
+import { DEVICE_REPOSITORY } from './domain/repositories/device.repository';
+import { USER_REPOSITORY } from './domain/repositories/user.repository';
+import { PASSWORD_CREDENTIAL_REPOSITORY } from './domain/repositories/password-credential.repository';
+import { PASSWORD_RESET_TOKEN_REPOSITORY } from './domain/repositories/password-reset-token.repository';
+import { SESSION_REPOSITORY } from './domain/repositories/session.repository';
+import { EMAIL_VERIFICATION_TOKEN_REPOSITORY } from './domain/repositories/email-verification-token.repository';
+
+import { PASSWORD_HASHER } from './domain/services/password-hasher';
+import { TOKEN_HASHER } from './domain/services/token-hasher';
+import { TOKEN_BLACKLIST } from './domain/services/token-blacklist';
+import { REFRESH_TOKEN_GENERATOR } from './domain/services/refresh-token-generator';
+import { ACCESS_TOKEN_GENERATOR } from './domain/services/access-token-generator';
+import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
+
 @Module({
   imports: [
     DatabaseModule,
+
     TypeOrmModule.forFeature([
       UserOrmEntity,
       EmailVerificationTokenOrmEntity,
+      PasswordResetTokenOrmEntity,
     ]),
   ],
 
@@ -68,10 +76,14 @@ import { AuthGuard } from './infrastructure/http/auth.guard';
     CreateSessionUseCase,
     RefreshSessionUseCase,
     LogoutSessionUseCase,
-    CreateEmailVerificationTokenUseCase,
-    AuthGuard,
-    VerifyEmailUseCase,
+
     CreateUserUseCase,
+    CreateEmailVerificationTokenUseCase,
+    VerifyEmailUseCase,
+    ResetPasswordUseCase,
+
+    AuthGuard,
+
     {
       provide: PASSWORD_HASHER,
       useClass: Argon2PasswordHasher,
@@ -90,6 +102,11 @@ import { AuthGuard } from './infrastructure/http/auth.guard';
     {
       provide: PASSWORD_CREDENTIAL_REPOSITORY,
       useClass: PostgresPasswordCredentialRepository,
+    },
+
+    {
+      provide: PASSWORD_RESET_TOKEN_REPOSITORY,
+      useClass: PostgresPasswordResetTokenRepository,
     },
 
     {

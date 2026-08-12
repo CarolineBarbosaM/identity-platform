@@ -14,6 +14,7 @@ import { CreateUserUseCase } from '../../application/use-cases/create-user.use-c
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
 import { AuthGuard } from './auth.guard';
@@ -29,6 +30,12 @@ export interface AuthenticateRequest {
   password: string;
 }
 
+export interface ResetPasswordRequest {
+  userId: string;
+  token: string;
+  newPassword: string;
+}
+
 export interface VerifyEmailRequest {
   userId: string;
   token: string;
@@ -42,6 +49,7 @@ export class IdentityController {
     private readonly createSession: CreateSessionUseCase,
     private readonly refreshSession: RefreshSessionUseCase,
     private readonly logoutSession: LogoutSessionUseCase,
+    private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly verifyEmail: VerifyEmailUseCase,
   ) {}
 
@@ -175,6 +183,18 @@ export class IdentityController {
     userId: string;
   }> {
     return request.user;
+  }
+
+  @Post('password/reset')
+  @HttpCode(204)
+  async resetPassword(
+    @Body() request: ResetPasswordRequest,
+  ): Promise<void> {
+    await this.resetPasswordUseCase.execute({
+      userId: request.userId,
+      token: request.token,
+      newPassword: request.newPassword,
+    });
   }
 
   @Post('email/verify')
