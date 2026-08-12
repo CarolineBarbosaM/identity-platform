@@ -10,25 +10,65 @@ import {
 } from '@nestjs/common';
 
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
+import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
 import { AuthGuard } from './auth.guard';
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
 
 export interface AuthenticateRequest {
   userId: string;
   password: string;
 }
 
+export interface VerifyEmailRequest {
+  userId: string;
+  token: string;
+}
+
 @Controller('auth')
 export class IdentityController {
   constructor(
+    private readonly createUser: CreateUserUseCase,
     private readonly authenticateUser: AuthenticateUser,
     private readonly createSession: CreateSessionUseCase,
     private readonly refreshSession: RefreshSessionUseCase,
     private readonly logoutSession: LogoutSessionUseCase,
+    private readonly verifyEmail: VerifyEmailUseCase,
   ) {}
+
+  @Post('register')
+  @HttpCode(201)
+  async register(
+    @Body() request: RegisterRequest,
+  ): Promise<{
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+  }> {
+    const { user } =
+      await this.createUser.execute({
+        name: request.name,
+        email: request.email,
+        password: request.password,
+      });
+
+    return {
+      id: user.getId(),
+      name: user.getName(),
+      email: user.getEmail(),
+      status: user.getStatus(),
+    };
+  }
 
   @Post('login')
   @HttpCode(200)
@@ -46,10 +86,11 @@ export class IdentityController {
     accessToken: string;
     refreshToken: string;
   }> {
-    const authenticated = await this.authenticateUser.execute({
-      userId: request.userId,
-      password: request.password,
-    });
+    const authenticated =
+      await this.authenticateUser.execute({
+        userId: request.userId,
+        password: request.password,
+      });
 
     if (!authenticated) {
       throw new UnauthorizedException({
@@ -57,11 +98,16 @@ export class IdentityController {
       });
     }
 
-    const userAgent = httpRequest.headers['user-agent'] ?? 'unknown';
+    const userAgent =
+      httpRequest.headers['user-agent'] ?? 'unknown';
 
-    const ipAddress = httpRequest.ip ?? 'unknown';
+    const ipAddress =
+      httpRequest.ip ?? 'unknown';
 
-    const { accessToken, refreshToken } = await this.createSession.execute({
+    const {
+      accessToken,
+      refreshToken,
+    } = await this.createSession.execute({
       userId: request.userId,
       deviceName: userAgent,
       userAgent,
@@ -77,7 +123,12 @@ export class IdentityController {
 
   @Post('refresh')
   @HttpCode(200)
-  async refresh(@Body() request: { refreshToken: string }): Promise<{
+  async refresh(
+    @Body()
+    request: {
+      refreshToken: string;
+    },
+  ): Promise<{
     accessToken: string;
     refreshToken: string;
   }> {
@@ -124,5 +175,16 @@ export class IdentityController {
     userId: string;
   }> {
     return request.user;
+  }
+
+  @Post('email/verify')
+  @HttpCode(204)
+  async verifyEmailAddress(
+    @Body() request: VerifyEmailRequest,
+  ): Promise<void> {
+    await this.verifyEmail.execute({
+      userId: request.userId,
+      token: request.token,
+    });
   }
 }
