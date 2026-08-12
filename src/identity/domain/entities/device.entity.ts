@@ -92,20 +92,17 @@ export class Device {
     this.revokedAt = this.clock.now();
   }
 
-  static rehydrate(
-  props: RehydrateDeviceProps,
-  clock: Clock,
-): Device {
-  return new Device(
-    props.id,
-    props.userId,
-    props.name,
-    props.userAgent,
-    props.ipAddress,
-    props.createdAt,
-    props.lastSeenAt,
-    props.revokedAt,
-    clock,
-  );
-}
+  static rehydrate(props: RehydrateDeviceProps, clock: Clock): Device {
+    return new Device(
+      props.id,
+      props.userId,
+      props.name,
+      props.userAgent,
+      props.ipAddress,
+      props.createdAt,
+      props.lastSeenAt,
+      props.revokedAt,
+      clock,
+    );
+  }
 }
