@@ -10,12 +10,20 @@ import {
 } from '@nestjs/common';
 
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
 import { AuthGuard } from './auth.guard';
+
+export interface RegisterRequest {
+  name: string;
+  email: string;
+  password: string;
+}
 
 export interface AuthenticateRequest {
   userId: string;
@@ -28,15 +36,47 @@ export interface ResetPasswordRequest {
   newPassword: string;
 }
 
+export interface VerifyEmailRequest {
+  userId: string;
+  token: string;
+}
+
 @Controller('auth')
 export class IdentityController {
   constructor(
+    private readonly createUser: CreateUserUseCase,
     private readonly authenticateUser: AuthenticateUser,
     private readonly createSession: CreateSessionUseCase,
     private readonly refreshSession: RefreshSessionUseCase,
     private readonly logoutSession: LogoutSessionUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
+    private readonly verifyEmail: VerifyEmailUseCase,
   ) {}
+
+  @Post('register')
+  @HttpCode(201)
+  async register(
+    @Body() request: RegisterRequest,
+  ): Promise<{
+    id: string;
+    name: string;
+    email: string;
+    status: string;
+  }> {
+    const { user } =
+      await this.createUser.execute({
+        name: request.name,
+        email: request.email,
+        password: request.password,
+      });
+
+    return {
+      id: user.getId(),
+      name: user.getName(),
+      email: user.getEmail(),
+      status: user.getStatus(),
+    };
+  }
 
   @Post('login')
   @HttpCode(200)
@@ -154,6 +194,17 @@ export class IdentityController {
       userId: request.userId,
       token: request.token,
       newPassword: request.newPassword,
+    });
+  }
+
+  @Post('email/verify')
+  @HttpCode(204)
+  async verifyEmailAddress(
+    @Body() request: VerifyEmailRequest,
+  ): Promise<void> {
+    await this.verifyEmail.execute({
+      userId: request.userId,
+      token: request.token,
     });
   }
 }
