@@ -7,6 +7,7 @@ import { CreateUserUseCase } from '../../application/use-cases/create-user.use-c
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
 import { User } from '../../domain/entities/user.entity';
@@ -21,7 +22,8 @@ describe('IdentityController', () => {
         email: 'caroline@example.com',
       },
       {
-        now: () => new Date('2026-08-12T10:00:00.000Z'),
+        now: () =>
+          new Date('2026-08-12T10:00:00.000Z'),
       },
     );
 
@@ -47,6 +49,10 @@ describe('IdentityController', () => {
       execute: jest.fn(),
     } as unknown as LogoutSessionUseCase;
 
+    const resetPassword = {
+      execute: jest.fn(),
+    } as unknown as ResetPasswordUseCase;
+
     const verifyEmail = {
       execute: jest.fn(),
     } as unknown as VerifyEmailUseCase;
@@ -57,6 +63,7 @@ describe('IdentityController', () => {
       createSession,
       refreshSession,
       logoutSession,
+      resetPassword,
       verifyEmail,
     );
 
@@ -76,7 +83,8 @@ describe('IdentityController', () => {
       id: 'user-id',
       name: 'Caroline',
       email: 'caroline@example.com',
-      status: UserStatus.PENDING_EMAIL_VERIFICATION,
+      status:
+        UserStatus.PENDING_EMAIL_VERIFICATION,
     });
   });
 
@@ -104,6 +112,10 @@ describe('IdentityController', () => {
       execute: jest.fn(),
     } as unknown as LogoutSessionUseCase;
 
+    const resetPassword = {
+      execute: jest.fn(),
+    } as unknown as ResetPasswordUseCase;
+
     const verifyEmail = {
       execute: jest.fn(),
     } as unknown as VerifyEmailUseCase;
@@ -114,6 +126,7 @@ describe('IdentityController', () => {
       createSession,
       refreshSession,
       logoutSession,
+      resetPassword,
       verifyEmail,
     );
 
@@ -130,12 +143,16 @@ describe('IdentityController', () => {
       },
     );
 
-    expect(authenticateUser.execute).toHaveBeenCalledWith({
+    expect(
+      authenticateUser.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'plain-password',
     });
 
-    expect(createSession.execute).toHaveBeenCalledWith({
+    expect(
+      createSession.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       deviceName: 'Mozilla/5.0',
       userAgent: 'Mozilla/5.0',
@@ -170,6 +187,10 @@ describe('IdentityController', () => {
       execute: jest.fn(),
     } as unknown as LogoutSessionUseCase;
 
+    const resetPassword = {
+      execute: jest.fn(),
+    } as unknown as ResetPasswordUseCase;
+
     const verifyEmail = {
       execute: jest.fn(),
     } as unknown as VerifyEmailUseCase;
@@ -180,6 +201,7 @@ describe('IdentityController', () => {
       createSession,
       refreshSession,
       logoutSession,
+      resetPassword,
       verifyEmail,
     );
 
@@ -202,68 +224,82 @@ describe('IdentityController', () => {
       }),
     );
 
-    expect(authenticateUser.execute).toHaveBeenCalledWith({
+    expect(
+      authenticateUser.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'wrong-password',
     });
 
-    expect(createSession.execute).not.toHaveBeenCalled();
+    expect(
+      createSession.execute,
+    ).not.toHaveBeenCalled();
   });
 
-  it('should use fallback values when device information is unavailable', async () => {
-    const createUser = {
-      execute: jest.fn(),
-    } as unknown as CreateUserUseCase;
+  it(
+    'should use fallback values when device information is unavailable',
+    async () => {
+      const createUser = {
+        execute: jest.fn(),
+      } as unknown as CreateUserUseCase;
 
-    const authenticateUser = {
-      execute: jest.fn().mockResolvedValue(true),
-    } as unknown as AuthenticateUser;
+      const authenticateUser = {
+        execute: jest.fn().mockResolvedValue(true),
+      } as unknown as AuthenticateUser;
 
-    const createSession = {
-      execute: jest.fn().mockResolvedValue({
-        accessToken: 'access-token',
-        refreshToken: 'refresh-token',
-      }),
-    } as unknown as CreateSessionUseCase;
+      const createSession = {
+        execute: jest.fn().mockResolvedValue({
+          accessToken: 'access-token',
+          refreshToken: 'refresh-token',
+        }),
+      } as unknown as CreateSessionUseCase;
 
-    const refreshSession = {
-      execute: jest.fn(),
-    } as unknown as RefreshSessionUseCase;
+      const refreshSession = {
+        execute: jest.fn(),
+      } as unknown as RefreshSessionUseCase;
 
-    const logoutSession = {
-      execute: jest.fn(),
-    } as unknown as LogoutSessionUseCase;
+      const logoutSession = {
+        execute: jest.fn(),
+      } as unknown as LogoutSessionUseCase;
 
-    const verifyEmail = {
-      execute: jest.fn(),
-    } as unknown as VerifyEmailUseCase;
+      const resetPassword = {
+        execute: jest.fn(),
+      } as unknown as ResetPasswordUseCase;
 
-    const controller = new IdentityController(
-      createUser,
-      authenticateUser,
-      createSession,
-      refreshSession,
-      logoutSession,
-      verifyEmail,
-    );
+      const verifyEmail = {
+        execute: jest.fn(),
+      } as unknown as VerifyEmailUseCase;
 
-    await controller.authenticate(
-      {
+      const controller = new IdentityController(
+        createUser,
+        authenticateUser,
+        createSession,
+        refreshSession,
+        logoutSession,
+        resetPassword,
+        verifyEmail,
+      );
+
+      await controller.authenticate(
+        {
+          userId: 'user-id',
+          password: 'plain-password',
+        },
+        {
+          headers: {},
+        },
+      );
+
+      expect(
+        createSession.execute,
+      ).toHaveBeenCalledWith({
         userId: 'user-id',
-        password: 'plain-password',
-      },
-      {
-        headers: {},
-      },
-    );
-
-    expect(createSession.execute).toHaveBeenCalledWith({
-      userId: 'user-id',
-      deviceName: 'unknown',
-      userAgent: 'unknown',
-      ipAddress: 'unknown',
-    });
-  });
+        deviceName: 'unknown',
+        userAgent: 'unknown',
+        ipAddress: 'unknown',
+      });
+    },
+  );
 
   it('should verify a user email', async () => {
     const createUser = {
@@ -286,6 +322,10 @@ describe('IdentityController', () => {
       execute: jest.fn(),
     } as unknown as LogoutSessionUseCase;
 
+    const resetPassword = {
+      execute: jest.fn(),
+    } as unknown as ResetPasswordUseCase;
+
     const verifyEmail = {
       execute: jest.fn(),
     } as unknown as VerifyEmailUseCase;
@@ -296,6 +336,7 @@ describe('IdentityController', () => {
       createSession,
       refreshSession,
       logoutSession,
+      resetPassword,
       verifyEmail,
     );
 
@@ -304,7 +345,9 @@ describe('IdentityController', () => {
       token: 'verification-token',
     });
 
-    expect(verifyEmail.execute).toHaveBeenCalledWith({
+    expect(
+      verifyEmail.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       token: 'verification-token',
     });

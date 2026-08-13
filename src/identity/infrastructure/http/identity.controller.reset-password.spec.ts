@@ -1,13 +1,17 @@
 import { IdentityController } from './identity.controller';
 
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
+import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
 describe('IdentityController - password reset', () => {
   it('should reset the user password', async () => {
+    const createUser = {} as CreateUserUseCase;
+
     const authenticateUser =
       {} as AuthenticateUser;
 
@@ -24,12 +28,17 @@ describe('IdentityController - password reset', () => {
       execute: jest.fn().mockResolvedValue(undefined),
     } as unknown as ResetPasswordUseCase;
 
+    const verifyEmail =
+      {} as VerifyEmailUseCase;
+
     const controller = new IdentityController(
+      createUser,
       authenticateUser,
       createSession,
       refreshSession,
       logoutSession,
       resetPassword,
+      verifyEmail,
     );
 
     await controller.resetPassword({
@@ -48,6 +57,8 @@ describe('IdentityController - password reset', () => {
   });
 
   it('should propagate password reset errors', async () => {
+    const createUser = {} as CreateUserUseCase;
+
     const authenticateUser =
       {} as AuthenticateUser;
 
@@ -70,12 +81,17 @@ describe('IdentityController - password reset', () => {
         ),
     } as unknown as ResetPasswordUseCase;
 
+    const verifyEmail =
+      {} as VerifyEmailUseCase;
+
     const controller = new IdentityController(
+      createUser,
       authenticateUser,
       createSession,
       refreshSession,
       logoutSession,
       resetPassword,
+      verifyEmail,
     );
 
     await expect(
