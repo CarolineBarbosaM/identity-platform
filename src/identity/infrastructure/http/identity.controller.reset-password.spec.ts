@@ -8,6 +8,11 @@ import { LogoutSessionUseCase } from '../../application/use-cases/logout-session
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
+import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
+import { SsoProviderRegistry } from '../../application/services/sso-provider-registry';
+import { AuthenticateSsoUseCase } from '../../application/use-cases/authenticate-sso.use-case';
+import { SsoStateStore } from '../../../identity/domain/services/sso-state-store'; 
+
 describe('IdentityController - password reset', () => {
   it('should reset the user password', async () => {
     const createUser = {} as CreateUserUseCase;
@@ -39,6 +44,10 @@ describe('IdentityController - password reset', () => {
       logoutSession,
       resetPassword,
       verifyEmail,
+      {} as VerifyTwoFactorAuthenticationUseCase,
+      {} as SsoProviderRegistry,
+      {} as AuthenticateSsoUseCase,
+      {} as SsoStateStore,
     );
 
     await controller.resetPassword({
@@ -92,8 +101,11 @@ describe('IdentityController - password reset', () => {
       logoutSession,
       resetPassword,
       verifyEmail,
+      {} as VerifyTwoFactorAuthenticationUseCase,
+      {} as SsoProviderRegistry,
+      {} as AuthenticateSsoUseCase,
+      {} as SsoStateStore,
     );
-
     await expect(
       controller.resetPassword({
         userId: 'user-id',
