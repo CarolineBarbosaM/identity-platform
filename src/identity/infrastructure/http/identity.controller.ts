@@ -16,6 +16,7 @@ import { RefreshSessionUseCase } from '../../application/use-cases/refresh-sessi
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
+import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
 
 import { AuthGuard } from './auth.guard';
 
@@ -30,6 +31,11 @@ export interface AuthenticateRequest {
   password: string;
 }
 
+export interface VerifyTwoFactorRequest {
+  userId: string;
+  code: string;
+}
+
 export interface ResetPasswordRequest {
   userId: string;
   token: string;
@@ -39,6 +45,13 @@ export interface ResetPasswordRequest {
 export interface VerifyEmailRequest {
   userId: string;
   token: string;
+}
+
+export interface DeviceRequest {
+  headers: {
+    'user-agent'?: string;
+  };
+  ip?: string;
 }
 
 @Controller('auth')
@@ -51,6 +64,7 @@ export class IdentityController {
     private readonly logoutSession: LogoutSessionUseCase,
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly verifyEmail: VerifyEmailUseCase,
+    private readonly verifyTwoFactorAuthentication: VerifyTwoFactorAuthenticationUseCase,
   ) {}
 
   @Post('register')
@@ -82,25 +96,52 @@ export class IdentityController {
   @HttpCode(200)
   async authenticate(
     @Body() request: AuthenticateRequest,
-    @Req()
-    httpRequest: {
-      headers: {
-        'user-agent'?: string;
-      };
-      ip?: string;
-    },
   ): Promise<{
     authenticated: boolean;
-    accessToken: string;
-    refreshToken: string;
+    requiresTwoFactor: boolean;
   }> {
-    const authenticated =
+    const authentication =
       await this.authenticateUser.execute({
         userId: request.userId,
         password: request.password,
       });
 
-    if (!authenticated) {
+    if (!authentication.authenticated) {
+      throw new UnauthorizedException({
+        authenticated: false,
+      });
+    }
+
+    if (authentication.requiresTwoFactor) {
+      return {
+        authenticated: false,
+        requiresTwoFactor: true,
+      };
+    }
+
+    return {
+      authenticated: true,
+      requiresTwoFactor: false,
+    };
+  }
+
+  @Post('login/2fa')
+  @HttpCode(200)
+  async authenticateTwoFactor(
+    @Body() request: VerifyTwoFactorRequest,
+    @Req() httpRequest: DeviceRequest,
+  ): Promise<{
+    authenticated: boolean;
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const validTwoFactor =
+      await this.verifyTwoFactorAuthentication.execute({
+        userId: request.userId,
+        code: request.code,
+      });
+
+    if (!validTwoFactor) {
       throw new UnauthorizedException({
         authenticated: false,
       });

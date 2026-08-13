@@ -7,7 +7,9 @@ import { CreateUserUseCase } from '../../application/use-cases/create-user.use-c
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
+import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
 
 import { User } from '../../domain/entities/user.entity';
 import { UserStatus } from '../../domain/enums/user-status.enum';
@@ -21,7 +23,8 @@ describe('IdentityController', () => {
         email: 'caroline@example.com',
       },
       {
-        now: () => new Date('2026-08-12T10:00:00.000Z'),
+        now: () =>
+          new Date('2026-08-12T10:00:00.000Z'),
       },
     );
 
@@ -47,9 +50,17 @@ describe('IdentityController', () => {
       execute: jest.fn(),
     } as unknown as LogoutSessionUseCase;
 
+    const resetPassword = {
+      execute: jest.fn(),
+    } as unknown as ResetPasswordUseCase;
+
     const verifyEmail = {
       execute: jest.fn(),
     } as unknown as VerifyEmailUseCase;
+
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn(),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
 
     const controller = new IdentityController(
       createUser,
@@ -57,7 +68,9 @@ describe('IdentityController', () => {
       createSession,
       refreshSession,
       logoutSession,
+      resetPassword,
       verifyEmail,
+      verifyTwoFactorAuthentication,
     );
 
     const result = await controller.register({
@@ -80,15 +93,100 @@ describe('IdentityController', () => {
     });
   });
 
-  it('should authenticate a user', async () => {
-    const createUser = {
-      execute: jest.fn(),
-    } as unknown as CreateUserUseCase;
-
+  it('should authenticate a user without two-factor authentication', async () => {
     const authenticateUser = {
-      execute: jest.fn().mockResolvedValue(true),
+      execute: jest.fn().mockResolvedValue({
+        authenticated: true,
+        requiresTwoFactor: false,
+      }),
     } as unknown as AuthenticateUser;
 
+    const createSession = {
+      execute: jest.fn(),
+    } as unknown as CreateSessionUseCase;
+
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn(),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
+
+    const controller = new IdentityController(
+      {} as CreateUserUseCase,
+      authenticateUser,
+      createSession,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
+      {} as VerifyEmailUseCase,
+      verifyTwoFactorAuthentication,
+    );
+
+    const result = await controller.authenticate({
+      userId: 'user-id',
+      password: 'plain-password',
+    });
+
+    expect(authenticateUser.execute).toHaveBeenCalledWith({
+      userId: 'user-id',
+      password: 'plain-password',
+    });
+
+    expect(
+      verifyTwoFactorAuthentication.execute,
+    ).not.toHaveBeenCalled();
+
+    expect(createSession.execute).not.toHaveBeenCalled();
+
+    expect(result).toEqual({
+      authenticated: true,
+      requiresTwoFactor: false,
+    });
+  });
+
+  it('should require two-factor authentication before creating a session', async () => {
+    const authenticateUser = {
+      execute: jest.fn().mockResolvedValue({
+        authenticated: true,
+        requiresTwoFactor: true,
+      }),
+    } as unknown as AuthenticateUser;
+
+    const createSession = {
+      execute: jest.fn(),
+    } as unknown as CreateSessionUseCase;
+
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn(),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
+
+    const controller = new IdentityController(
+      {} as CreateUserUseCase,
+      authenticateUser,
+      createSession,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
+      {} as VerifyEmailUseCase,
+      verifyTwoFactorAuthentication,
+    );
+
+    const result = await controller.authenticate({
+      userId: 'user-id',
+      password: 'plain-password',
+    });
+
+    expect(result).toEqual({
+      authenticated: false,
+      requiresTwoFactor: true,
+    });
+
+    expect(
+      verifyTwoFactorAuthentication.execute,
+    ).not.toHaveBeenCalled();
+
+    expect(createSession.execute).not.toHaveBeenCalled();
+  });
+
+  it('should create a session after valid two-factor authentication', async () => {
     const createSession = {
       execute: jest.fn().mockResolvedValue({
         accessToken: 'access-token',
@@ -96,31 +194,25 @@ describe('IdentityController', () => {
       }),
     } as unknown as CreateSessionUseCase;
 
-    const refreshSession = {
-      execute: jest.fn(),
-    } as unknown as RefreshSessionUseCase;
-
-    const logoutSession = {
-      execute: jest.fn(),
-    } as unknown as LogoutSessionUseCase;
-
-    const verifyEmail = {
-      execute: jest.fn(),
-    } as unknown as VerifyEmailUseCase;
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn().mockResolvedValue(true),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
 
     const controller = new IdentityController(
-      createUser,
-      authenticateUser,
+      {} as CreateUserUseCase,
+      {} as AuthenticateUser,
       createSession,
-      refreshSession,
-      logoutSession,
-      verifyEmail,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
+      {} as VerifyEmailUseCase,
+      verifyTwoFactorAuthentication,
     );
 
-    const result = await controller.authenticate(
+    const result = await controller.authenticateTwoFactor(
       {
         userId: 'user-id',
-        password: 'plain-password',
+        code: '123456',
       },
       {
         headers: {
@@ -130,12 +222,16 @@ describe('IdentityController', () => {
       },
     );
 
-    expect(authenticateUser.execute).toHaveBeenCalledWith({
+    expect(
+      verifyTwoFactorAuthentication.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
-      password: 'plain-password',
+      code: '123456',
     });
 
-    expect(createSession.execute).toHaveBeenCalledWith({
+    expect(
+      createSession.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       deviceName: 'Mozilla/5.0',
       userAgent: 'Mozilla/5.0',
@@ -149,45 +245,31 @@ describe('IdentityController', () => {
     });
   });
 
-  it('should reject invalid credentials', async () => {
-    const createUser = {
-      execute: jest.fn(),
-    } as unknown as CreateUserUseCase;
-
-    const authenticateUser = {
-      execute: jest.fn().mockResolvedValue(false),
-    } as unknown as AuthenticateUser;
-
+  it('should reject an invalid two-factor authentication code', async () => {
     const createSession = {
       execute: jest.fn(),
     } as unknown as CreateSessionUseCase;
 
-    const refreshSession = {
-      execute: jest.fn(),
-    } as unknown as RefreshSessionUseCase;
-
-    const logoutSession = {
-      execute: jest.fn(),
-    } as unknown as LogoutSessionUseCase;
-
-    const verifyEmail = {
-      execute: jest.fn(),
-    } as unknown as VerifyEmailUseCase;
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn().mockResolvedValue(false),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
 
     const controller = new IdentityController(
-      createUser,
-      authenticateUser,
+      {} as CreateUserUseCase,
+      {} as AuthenticateUser,
       createSession,
-      refreshSession,
-      logoutSession,
-      verifyEmail,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
+      {} as VerifyEmailUseCase,
+      verifyTwoFactorAuthentication,
     );
 
     await expect(
-      controller.authenticate(
+      controller.authenticateTwoFactor(
         {
           userId: 'user-id',
-          password: 'wrong-password',
+          code: 'wrong-code',
         },
         {
           headers: {
@@ -202,23 +284,73 @@ describe('IdentityController', () => {
       }),
     );
 
-    expect(authenticateUser.execute).toHaveBeenCalledWith({
+    expect(
+      verifyTwoFactorAuthentication.execute,
+    ).toHaveBeenCalledWith({
+      userId: 'user-id',
+      code: 'wrong-code',
+    });
+
+    expect(
+      createSession.execute,
+    ).not.toHaveBeenCalled();
+  });
+
+  it('should reject invalid credentials', async () => {
+    const authenticateUser = {
+      execute: jest.fn().mockResolvedValue({
+        authenticated: false,
+        requiresTwoFactor: false,
+      }),
+    } as unknown as AuthenticateUser;
+
+    const createSession = {
+      execute: jest.fn(),
+    } as unknown as CreateSessionUseCase;
+
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn(),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
+
+    const controller = new IdentityController(
+      {} as CreateUserUseCase,
+      authenticateUser,
+      createSession,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
+      {} as VerifyEmailUseCase,
+      verifyTwoFactorAuthentication,
+    );
+
+    await expect(
+      controller.authenticate({
+        userId: 'user-id',
+        password: 'wrong-password',
+      }),
+    ).rejects.toThrow(
+      new UnauthorizedException({
+        authenticated: false,
+      }),
+    );
+
+    expect(
+      authenticateUser.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       password: 'wrong-password',
     });
 
-    expect(createSession.execute).not.toHaveBeenCalled();
+    expect(
+      createSession.execute,
+    ).not.toHaveBeenCalled();
+
+    expect(
+      verifyTwoFactorAuthentication.execute,
+    ).not.toHaveBeenCalled();
   });
 
   it('should use fallback values when device information is unavailable', async () => {
-    const createUser = {
-      execute: jest.fn(),
-    } as unknown as CreateUserUseCase;
-
-    const authenticateUser = {
-      execute: jest.fn().mockResolvedValue(true),
-    } as unknown as AuthenticateUser;
-
     const createSession = {
       execute: jest.fn().mockResolvedValue({
         accessToken: 'access-token',
@@ -226,38 +358,34 @@ describe('IdentityController', () => {
       }),
     } as unknown as CreateSessionUseCase;
 
-    const refreshSession = {
-      execute: jest.fn(),
-    } as unknown as RefreshSessionUseCase;
-
-    const logoutSession = {
-      execute: jest.fn(),
-    } as unknown as LogoutSessionUseCase;
-
-    const verifyEmail = {
-      execute: jest.fn(),
-    } as unknown as VerifyEmailUseCase;
+    const verifyTwoFactorAuthentication = {
+      execute: jest.fn().mockResolvedValue(true),
+    } as unknown as VerifyTwoFactorAuthenticationUseCase;
 
     const controller = new IdentityController(
-      createUser,
-      authenticateUser,
+      {} as CreateUserUseCase,
+      {} as AuthenticateUser,
       createSession,
-      refreshSession,
-      logoutSession,
-      verifyEmail,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
+      {} as VerifyEmailUseCase,
+      verifyTwoFactorAuthentication,
     );
 
-    await controller.authenticate(
+    await controller.authenticateTwoFactor(
       {
         userId: 'user-id',
-        password: 'plain-password',
+        code: '123456',
       },
       {
         headers: {},
       },
     );
 
-    expect(createSession.execute).toHaveBeenCalledWith({
+    expect(
+      createSession.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       deviceName: 'unknown',
       userAgent: 'unknown',
@@ -266,37 +394,19 @@ describe('IdentityController', () => {
   });
 
   it('should verify a user email', async () => {
-    const createUser = {
-      execute: jest.fn(),
-    } as unknown as CreateUserUseCase;
-
-    const authenticateUser = {
-      execute: jest.fn(),
-    } as unknown as AuthenticateUser;
-
-    const createSession = {
-      execute: jest.fn(),
-    } as unknown as CreateSessionUseCase;
-
-    const refreshSession = {
-      execute: jest.fn(),
-    } as unknown as RefreshSessionUseCase;
-
-    const logoutSession = {
-      execute: jest.fn(),
-    } as unknown as LogoutSessionUseCase;
-
     const verifyEmail = {
       execute: jest.fn(),
     } as unknown as VerifyEmailUseCase;
 
     const controller = new IdentityController(
-      createUser,
-      authenticateUser,
-      createSession,
-      refreshSession,
-      logoutSession,
+      {} as CreateUserUseCase,
+      {} as AuthenticateUser,
+      {} as CreateSessionUseCase,
+      {} as RefreshSessionUseCase,
+      {} as LogoutSessionUseCase,
+      {} as ResetPasswordUseCase,
       verifyEmail,
+      {} as VerifyTwoFactorAuthenticationUseCase,
     );
 
     await controller.verifyEmailAddress({
@@ -304,7 +414,9 @@ describe('IdentityController', () => {
       token: 'verification-token',
     });
 
-    expect(verifyEmail.execute).toHaveBeenCalledWith({
+    expect(
+      verifyEmail.execute,
+    ).toHaveBeenCalledWith({
       userId: 'user-id',
       token: 'verification-token',
     });

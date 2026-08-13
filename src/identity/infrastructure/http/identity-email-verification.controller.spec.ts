@@ -1,19 +1,46 @@
 import { IdentityController } from './identity.controller';
 
+import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
+import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
+import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
+import { RefreshSessionUseCase } from '../../application/use-cases/refresh-session.use-case';
+import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
+import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 
 describe('IdentityController - email verification', () => {
   it('should verify the user email', async () => {
+    const createUser =
+      {} as CreateUserUseCase;
+
+    const authenticateUser =
+      {} as AuthenticateUser;
+
+    const createSession =
+      {} as CreateSessionUseCase;
+
+    const refreshSession =
+      {} as RefreshSessionUseCase;
+
+    const logoutSession =
+      {} as LogoutSessionUseCase;
+
+    const resetPassword =
+      {} as ResetPasswordUseCase;
+
     const verifyEmail = {
-      execute: jest.fn().mockResolvedValue(undefined),
+      execute: jest
+        .fn()
+        .mockResolvedValue(undefined),
     } as unknown as VerifyEmailUseCase;
 
     const controller = new IdentityController(
-      {} as any, // createUser
-      {} as any, // authenticateUser
-      {} as any, // createSession
-      {} as any, // refreshSession
-      {} as any, // logoutSession
+      createUser,
+      authenticateUser,
+      createSession,
+      refreshSession,
+      logoutSession,
+      resetPassword,
       verifyEmail,
     );
 
@@ -31,6 +58,24 @@ describe('IdentityController - email verification', () => {
   });
 
   it('should propagate verification errors', async () => {
+    const createUser =
+      {} as CreateUserUseCase;
+
+    const authenticateUser =
+      {} as AuthenticateUser;
+
+    const createSession =
+      {} as CreateSessionUseCase;
+
+    const refreshSession =
+      {} as RefreshSessionUseCase;
+
+    const logoutSession =
+      {} as LogoutSessionUseCase;
+
+    const resetPassword =
+      {} as ResetPasswordUseCase;
+
     const verifyEmail = {
       execute: jest
         .fn()
@@ -42,11 +87,12 @@ describe('IdentityController - email verification', () => {
     } as unknown as VerifyEmailUseCase;
 
     const controller = new IdentityController(
-      {} as any, // createUser
-      {} as any, // authenticateUser
-      {} as any, // createSession
-      {} as any, // refreshSession
-      {} as any, // logoutSession
+      createUser,
+      authenticateUser,
+      createSession,
+      refreshSession,
+      logoutSession,
+      resetPassword,
       verifyEmail,
     );
 
