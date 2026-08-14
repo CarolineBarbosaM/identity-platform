@@ -18,78 +18,57 @@ class FakeClock implements Clock {
   }
 
   advance(milliseconds: number): void {
-    this.currentDate = new Date(
-      this.currentDate.getTime() + milliseconds,
-    );
+    this.currentDate = new Date(this.currentDate.getTime() + milliseconds);
   }
 }
 
 describe('ResetPasswordUseCase', () => {
   it('should reset the user password', async () => {
-    const clock = new FakeClock(
-      new Date('2026-08-12T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 
-    const tokenRepository =
-      new InMemoryPasswordResetTokenRepository();
+    const tokenRepository = new InMemoryPasswordResetTokenRepository();
 
-    const credentialRepository =
-      new InMemoryPasswordCredentialRepository();
+    const credentialRepository = new InMemoryPasswordCredentialRepository();
 
     const tokenHasher = {
       hash: jest.fn(),
-      compare: jest
-        .fn()
-        .mockResolvedValue(true),
+      compare: jest.fn().mockResolvedValue(true),
     };
 
     const passwordHasher = {
-      hash: jest
-        .fn()
-        .mockResolvedValue(
-          'new-password-hash',
-        ),
+      hash: jest.fn().mockResolvedValue('new-password-hash'),
       compare: jest.fn(),
     };
 
-    const credential =
-      PasswordCredential.create(
-        {
-          id: 'credential-id',
-          userId: 'user-id',
-          passwordHash: 'old-password-hash',
-        },
-        clock,
-      );
-
-    await credentialRepository.save(
-      credential,
+    const credential = PasswordCredential.create(
+      {
+        id: 'credential-id',
+        userId: 'user-id',
+        passwordHash: 'old-password-hash',
+      },
+      clock,
     );
 
-    const resetToken =
-      PasswordResetToken.create(
-        {
-          id: 'reset-token-id',
-          userId: 'user-id',
-          tokenHash: 'hashed-reset-token',
-          expiresAt: new Date(
-            '2026-08-12T10:30:00.000Z',
-          ),
-        },
-        clock,
-      );
+    await credentialRepository.save(credential);
 
-    await tokenRepository.save(
-      resetToken,
+    const resetToken = PasswordResetToken.create(
+      {
+        id: 'reset-token-id',
+        userId: 'user-id',
+        tokenHash: 'hashed-reset-token',
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
+      },
+      clock,
     );
 
-    const useCase =
-      new ResetPasswordUseCase(
-        tokenRepository,
-        credentialRepository,
-        passwordHasher,
-        tokenHasher,
-      );
+    await tokenRepository.save(resetToken);
+
+    const useCase = new ResetPasswordUseCase(
+      tokenRepository,
+      credentialRepository,
+      passwordHasher,
+      tokenHasher,
+    );
 
     await useCase.execute({
       userId: 'user-id',
@@ -97,49 +76,31 @@ describe('ResetPasswordUseCase', () => {
       newPassword: 'new-password',
     });
 
-    expect(
-      tokenHasher.compare,
-    ).toHaveBeenCalledWith(
+    expect(tokenHasher.compare).toHaveBeenCalledWith(
       'plain-reset-token',
       'hashed-reset-token',
     );
 
-    expect(
-      passwordHasher.hash,
-    ).toHaveBeenCalledWith(
-      'new-password',
-    );
+    expect(passwordHasher.hash).toHaveBeenCalledWith('new-password');
 
     const updatedCredential =
-      await credentialRepository.findByUserId(
-        'user-id',
-      );
+      await credentialRepository.findByUserId('user-id');
 
-    expect(
-      updatedCredential?.getPasswordHash(),
-    ).toBe('new-password-hash');
+    expect(updatedCredential?.getPasswordHash()).toBe('new-password-hash');
 
-    expect(
-      resetToken.isUsed(),
-    ).toBe(true);
+    expect(resetToken.isUsed()).toBe(true);
   });
 
   it('should reject an invalid token', async () => {
-    const clock = new FakeClock(
-      new Date('2026-08-12T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 
-    const tokenRepository =
-      new InMemoryPasswordResetTokenRepository();
+    const tokenRepository = new InMemoryPasswordResetTokenRepository();
 
-    const credentialRepository =
-      new InMemoryPasswordCredentialRepository();
+    const credentialRepository = new InMemoryPasswordCredentialRepository();
 
     const tokenHasher = {
       hash: jest.fn(),
-      compare: jest
-        .fn()
-        .mockResolvedValue(false),
+      compare: jest.fn().mockResolvedValue(false),
     };
 
     const passwordHasher = {
@@ -147,30 +108,24 @@ describe('ResetPasswordUseCase', () => {
       compare: jest.fn(),
     };
 
-    const resetToken =
-      PasswordResetToken.create(
-        {
-          id: 'reset-token-id',
-          userId: 'user-id',
-          tokenHash: 'hashed-reset-token',
-          expiresAt: new Date(
-            '2026-08-12T10:30:00.000Z',
-          ),
-        },
-        clock,
-      );
-
-    await tokenRepository.save(
-      resetToken,
+    const resetToken = PasswordResetToken.create(
+      {
+        id: 'reset-token-id',
+        userId: 'user-id',
+        tokenHash: 'hashed-reset-token',
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
+      },
+      clock,
     );
 
-    const useCase =
-      new ResetPasswordUseCase(
-        tokenRepository,
-        credentialRepository,
-        passwordHasher,
-        tokenHasher,
-      );
+    await tokenRepository.save(resetToken);
+
+    const useCase = new ResetPasswordUseCase(
+      tokenRepository,
+      credentialRepository,
+      passwordHasher,
+      tokenHasher,
+    );
 
     await expect(
       useCase.execute({
@@ -178,31 +133,21 @@ describe('ResetPasswordUseCase', () => {
         token: 'wrong-token',
         newPassword: 'new-password',
       }),
-    ).rejects.toThrow(
-      'Invalid password reset token',
-    );
+    ).rejects.toThrow('Invalid password reset token');
 
-    expect(
-      passwordHasher.hash,
-    ).not.toHaveBeenCalled();
+    expect(passwordHasher.hash).not.toHaveBeenCalled();
   });
 
   it('should reject an expired token', async () => {
-    const clock = new FakeClock(
-      new Date('2026-08-12T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 
-    const tokenRepository =
-      new InMemoryPasswordResetTokenRepository();
+    const tokenRepository = new InMemoryPasswordResetTokenRepository();
 
-    const credentialRepository =
-      new InMemoryPasswordCredentialRepository();
+    const credentialRepository = new InMemoryPasswordCredentialRepository();
 
     const tokenHasher = {
       hash: jest.fn(),
-      compare: jest
-        .fn()
-        .mockResolvedValue(true),
+      compare: jest.fn().mockResolvedValue(true),
     };
 
     const passwordHasher = {
@@ -210,34 +155,26 @@ describe('ResetPasswordUseCase', () => {
       compare: jest.fn(),
     };
 
-    const resetToken =
-      PasswordResetToken.create(
-        {
-          id: 'reset-token-id',
-          userId: 'user-id',
-          tokenHash: 'hashed-reset-token',
-          expiresAt: new Date(
-            '2026-08-12T10:30:00.000Z',
-          ),
-        },
-        clock,
-      );
-
-    await tokenRepository.save(
-      resetToken,
+    const resetToken = PasswordResetToken.create(
+      {
+        id: 'reset-token-id',
+        userId: 'user-id',
+        tokenHash: 'hashed-reset-token',
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
+      },
+      clock,
     );
 
-    clock.advance(
-      30 * 60 * 1000,
-    );
+    await tokenRepository.save(resetToken);
 
-    const useCase =
-      new ResetPasswordUseCase(
-        tokenRepository,
-        credentialRepository,
-        passwordHasher,
-        tokenHasher,
-      );
+    clock.advance(30 * 60 * 1000);
+
+    const useCase = new ResetPasswordUseCase(
+      tokenRepository,
+      credentialRepository,
+      passwordHasher,
+      tokenHasher,
+    );
 
     await expect(
       useCase.execute({
@@ -245,31 +182,21 @@ describe('ResetPasswordUseCase', () => {
         token: 'plain-reset-token',
         newPassword: 'new-password',
       }),
-    ).rejects.toThrow(
-      'Password reset token has expired',
-    );
+    ).rejects.toThrow('Password reset token has expired');
 
-    expect(
-      passwordHasher.hash,
-    ).not.toHaveBeenCalled();
+    expect(passwordHasher.hash).not.toHaveBeenCalled();
   });
 
   it('should reject a used token', async () => {
-    const clock = new FakeClock(
-      new Date('2026-08-12T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 
-    const tokenRepository =
-      new InMemoryPasswordResetTokenRepository();
+    const tokenRepository = new InMemoryPasswordResetTokenRepository();
 
-    const credentialRepository =
-      new InMemoryPasswordCredentialRepository();
+    const credentialRepository = new InMemoryPasswordCredentialRepository();
 
     const tokenHasher = {
       hash: jest.fn(),
-      compare: jest
-        .fn()
-        .mockResolvedValue(true),
+      compare: jest.fn().mockResolvedValue(true),
     };
 
     const passwordHasher = {
@@ -277,32 +204,26 @@ describe('ResetPasswordUseCase', () => {
       compare: jest.fn(),
     };
 
-    const resetToken =
-      PasswordResetToken.create(
-        {
-          id: 'reset-token-id',
-          userId: 'user-id',
-          tokenHash: 'hashed-reset-token',
-          expiresAt: new Date(
-            '2026-08-12T10:30:00.000Z',
-          ),
-        },
-        clock,
-      );
+    const resetToken = PasswordResetToken.create(
+      {
+        id: 'reset-token-id',
+        userId: 'user-id',
+        tokenHash: 'hashed-reset-token',
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
+      },
+      clock,
+    );
 
     resetToken.consume();
 
-    await tokenRepository.save(
-      resetToken,
-    );
+    await tokenRepository.save(resetToken);
 
-    const useCase =
-      new ResetPasswordUseCase(
-        tokenRepository,
-        credentialRepository,
-        passwordHasher,
-        tokenHasher,
-      );
+    const useCase = new ResetPasswordUseCase(
+      tokenRepository,
+      credentialRepository,
+      passwordHasher,
+      tokenHasher,
+    );
 
     await expect(
       useCase.execute({
@@ -310,66 +231,46 @@ describe('ResetPasswordUseCase', () => {
         token: 'plain-reset-token',
         newPassword: 'new-password',
       }),
-    ).rejects.toThrow(
-      'Password reset token has already been used',
-    );
+    ).rejects.toThrow('Password reset token has already been used');
 
-    expect(
-      passwordHasher.hash,
-    ).not.toHaveBeenCalled();
+    expect(passwordHasher.hash).not.toHaveBeenCalled();
   });
 
   it('should reject when password credential does not exist', async () => {
-    const clock = new FakeClock(
-      new Date('2026-08-12T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 
-    const tokenRepository =
-      new InMemoryPasswordResetTokenRepository();
+    const tokenRepository = new InMemoryPasswordResetTokenRepository();
 
-    const credentialRepository =
-      new InMemoryPasswordCredentialRepository();
+    const credentialRepository = new InMemoryPasswordCredentialRepository();
 
     const tokenHasher = {
       hash: jest.fn(),
-      compare: jest
-        .fn()
-        .mockResolvedValue(true),
+      compare: jest.fn().mockResolvedValue(true),
     };
 
     const passwordHasher = {
-      hash: jest
-        .fn()
-        .mockResolvedValue(
-          'new-password-hash',
-        ),
+      hash: jest.fn().mockResolvedValue('new-password-hash'),
       compare: jest.fn(),
     };
 
-    const resetToken =
-      PasswordResetToken.create(
-        {
-          id: 'reset-token-id',
-          userId: 'user-id',
-          tokenHash: 'hashed-reset-token',
-          expiresAt: new Date(
-            '2026-08-12T10:30:00.000Z',
-          ),
-        },
-        clock,
-      );
-
-    await tokenRepository.save(
-      resetToken,
+    const resetToken = PasswordResetToken.create(
+      {
+        id: 'reset-token-id',
+        userId: 'user-id',
+        tokenHash: 'hashed-reset-token',
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
+      },
+      clock,
     );
 
-    const useCase =
-      new ResetPasswordUseCase(
-        tokenRepository,
-        credentialRepository,
-        passwordHasher,
-        tokenHasher,
-      );
+    await tokenRepository.save(resetToken);
+
+    const useCase = new ResetPasswordUseCase(
+      tokenRepository,
+      credentialRepository,
+      passwordHasher,
+      tokenHasher,
+    );
 
     await expect(
       useCase.execute({
@@ -377,8 +278,6 @@ describe('ResetPasswordUseCase', () => {
         token: 'plain-reset-token',
         newPassword: 'new-password',
       }),
-    ).rejects.toThrow(
-      'Password credential not found',
-    );
+    ).rejects.toThrow('Password credential not found');
   });
 });

@@ -1,16 +1,10 @@
 import { Inject } from '@nestjs/common';
 
-import {
-  TWO_FACTOR_AUTHENTICATION_REPOSITORY,
-} from '../../domain/repositories/two-factor-authentication.repository';
+import { TWO_FACTOR_AUTHENTICATION_REPOSITORY } from '../../domain/repositories/two-factor-authentication.repository';
 
-import type {
-  TwoFactorAuthenticationRepository,
-} from '../../domain/repositories/two-factor-authentication.repository';
+import type { TwoFactorAuthenticationRepository } from '../../domain/repositories/two-factor-authentication.repository';
 
-import type {
-  TwoFactorAuthenticator,
-} from '../../domain/services/two-factor-authenticator';
+import type { TwoFactorAuthenticator } from '../../domain/services/two-factor-authenticator';
 
 export interface VerifyTwoFactorAuthenticationInput {
   userId: string;
@@ -19,21 +13,14 @@ export interface VerifyTwoFactorAuthenticationInput {
 
 export class VerifyTwoFactorAuthenticationUseCase {
   constructor(
-    @Inject(
-      TWO_FACTOR_AUTHENTICATION_REPOSITORY,
-    )
+    @Inject(TWO_FACTOR_AUTHENTICATION_REPOSITORY)
     private readonly repository: TwoFactorAuthenticationRepository,
 
     private readonly authenticator: TwoFactorAuthenticator,
   ) {}
 
-  async execute(
-    input: VerifyTwoFactorAuthenticationInput,
-  ): Promise<boolean> {
-    const twoFactor =
-      await this.repository.findByUserId(
-        input.userId,
-      );
+  async execute(input: VerifyTwoFactorAuthenticationInput): Promise<boolean> {
+    const twoFactor = await this.repository.findByUserId(input.userId);
 
     if (!twoFactor) {
       return false;
@@ -43,9 +30,6 @@ export class VerifyTwoFactorAuthenticationUseCase {
       return false;
     }
 
-    return this.authenticator.verifyCode(
-      twoFactor.getSecret(),
-      input.code,
-    );
+    return this.authenticator.verifyCode(twoFactor.getSecret(), input.code);
   }
 }

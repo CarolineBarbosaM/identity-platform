@@ -1,8 +1,6 @@
 import { SsoProviderRegistry } from './sso-provider-registry';
 
-import type {
-  SsoProvider,
-} from '../../domain/services/sso-provider';
+import type { SsoProvider } from '../../domain/services/sso-provider';
 
 describe('SsoProviderRegistry', () => {
   const googleProvider: SsoProvider = {
@@ -17,30 +15,22 @@ describe('SsoProviderRegistry', () => {
     authenticate: jest.fn(),
   };
 
-  const registry =
-    new SsoProviderRegistry([
-      googleProvider,
-      microsoftProvider,
-    ]);
+  const registry = new SsoProviderRegistry([googleProvider, microsoftProvider]);
 
   it('should return the provider by name', () => {
-    const provider =
-      registry.get('google');
+    const provider = registry.get('google');
 
     expect(provider).toBe(googleProvider);
   });
 
   it('should find a provider case-insensitively', () => {
-    const provider =
-      registry.get('MICROSOFT');
+    const provider = registry.get('MICROSOFT');
 
     expect(provider).toBe(microsoftProvider);
   });
 
   it('should throw when the provider is not supported', () => {
-    expect(() =>
-      registry.get('github'),
-    ).toThrow(
+    expect(() => registry.get('github')).toThrow(
       'SSO provider "github" is not supported',
     );
   });

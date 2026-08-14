@@ -11,30 +11,25 @@ import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use
 import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
 import { SsoProviderRegistry } from '../../application/services/sso-provider-registry';
 import { AuthenticateSsoUseCase } from '../../application/use-cases/authenticate-sso.use-case';
-import { SsoStateStore } from '../../../identity/domain/services/sso-state-store'; 
+import { SsoStateStore } from '../../../identity/domain/services/sso-state-store';
 
 describe('IdentityController - password reset', () => {
   it('should reset the user password', async () => {
     const createUser = {} as CreateUserUseCase;
 
-    const authenticateUser =
-      {} as AuthenticateUser;
+    const authenticateUser = {} as AuthenticateUser;
 
-    const createSession =
-      {} as CreateSessionUseCase;
+    const createSession = {} as CreateSessionUseCase;
 
-    const refreshSession =
-      {} as RefreshSessionUseCase;
+    const refreshSession = {} as RefreshSessionUseCase;
 
-    const logoutSession =
-      {} as LogoutSessionUseCase;
+    const logoutSession = {} as LogoutSessionUseCase;
 
     const resetPassword = {
       execute: jest.fn().mockResolvedValue(undefined),
     } as unknown as ResetPasswordUseCase;
 
-    const verifyEmail =
-      {} as VerifyEmailUseCase;
+    const verifyEmail = {} as VerifyEmailUseCase;
 
     const controller = new IdentityController(
       createUser,
@@ -56,9 +51,7 @@ describe('IdentityController - password reset', () => {
       newPassword: 'new-password',
     });
 
-    expect(
-      resetPassword.execute,
-    ).toHaveBeenCalledWith({
+    expect(resetPassword.execute).toHaveBeenCalledWith({
       userId: 'user-id',
       token: 'reset-token',
       newPassword: 'new-password',
@@ -68,30 +61,21 @@ describe('IdentityController - password reset', () => {
   it('should propagate password reset errors', async () => {
     const createUser = {} as CreateUserUseCase;
 
-    const authenticateUser =
-      {} as AuthenticateUser;
+    const authenticateUser = {} as AuthenticateUser;
 
-    const createSession =
-      {} as CreateSessionUseCase;
+    const createSession = {} as CreateSessionUseCase;
 
-    const refreshSession =
-      {} as RefreshSessionUseCase;
+    const refreshSession = {} as RefreshSessionUseCase;
 
-    const logoutSession =
-      {} as LogoutSessionUseCase;
+    const logoutSession = {} as LogoutSessionUseCase;
 
     const resetPassword = {
       execute: jest
         .fn()
-        .mockRejectedValue(
-          new Error(
-            'Invalid password reset token',
-          ),
-        ),
+        .mockRejectedValue(new Error('Invalid password reset token')),
     } as unknown as ResetPasswordUseCase;
 
-    const verifyEmail =
-      {} as VerifyEmailUseCase;
+    const verifyEmail = {} as VerifyEmailUseCase;
 
     const controller = new IdentityController(
       createUser,
@@ -112,8 +96,6 @@ describe('IdentityController - password reset', () => {
         token: 'wrong-token',
         newPassword: 'new-password',
       }),
-    ).rejects.toThrow(
-      'Invalid password reset token',
-    );
+    ).rejects.toThrow('Invalid password reset token');
   });
 });

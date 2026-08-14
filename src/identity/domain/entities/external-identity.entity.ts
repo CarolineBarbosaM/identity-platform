@@ -15,9 +15,7 @@ export class ExternalIdentity {
     private readonly email: string,
   ) {}
 
-  static create(
-    props: CreateExternalIdentityProps,
-  ): ExternalIdentity {
+  static create(props: CreateExternalIdentityProps): ExternalIdentity {
     return new ExternalIdentity(
       props.id,
       props.userId,

@@ -4,6 +4,4 @@ export interface SsoStateStore {
   consume(state: string): Promise<boolean>;
 }
 
-export const SSO_STATE_STORE = Symbol(
-  'SSO_STATE_STORE',
-);
+export const SSO_STATE_STORE = Symbol('SSO_STATE_STORE');

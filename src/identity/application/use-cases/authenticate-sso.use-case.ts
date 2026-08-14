@@ -3,21 +3,13 @@ import { randomUUID } from 'crypto';
 
 import { ExternalIdentity } from '../../domain/entities/external-identity.entity';
 
-import {
-  USER_REPOSITORY,
-} from '../../domain/repositories/user.repository';
+import { USER_REPOSITORY } from '../../domain/repositories/user.repository';
 
-import type {
-  UserRepository,
-} from '../../domain/repositories/user.repository';
+import type { UserRepository } from '../../domain/repositories/user.repository';
 
-import {
-  EXTERNAL_IDENTITY_REPOSITORY,
-} from '../../domain/repositories/external-identity.repository';
+import { EXTERNAL_IDENTITY_REPOSITORY } from '../../domain/repositories/external-identity.repository';
 
-import type {
-  ExternalIdentityRepository,
-} from '../../domain/repositories/external-identity.repository';
+import type { ExternalIdentityRepository } from '../../domain/repositories/external-identity.repository';
 
 import type {
   SsoProvider,
@@ -45,24 +37,20 @@ export class AuthenticateSsoUseCase {
     private readonly userRepository: UserRepository,
   ) {}
 
-  async execute(
-    input: AuthenticateSsoInput,
-  ): Promise<AuthenticateSsoOutput> {
-    const profile =
-      await input.provider.authenticate(
-        input.code,
-        input.state,
-      );
+  async execute(input: AuthenticateSsoInput): Promise<AuthenticateSsoOutput> {
+    const profile = await input.provider.authenticate(input.code, input.state);
 
-    const provider =
-      input.provider.getName();
+    if (!profile.emailVerified) {
+      throw new Error('SSO email must be verified');
+    }
+
+    const provider = input.provider.getName();
 
     const existingIdentity =
-      await this.externalIdentityRepository
-        .findByProviderAndProviderUserId(
-          provider,
-          profile.providerUserId,
-        );
+      await this.externalIdentityRepository.findByProviderAndProviderUserId(
+        provider,
+        profile.providerUserId,
+      );
 
     if (existingIdentity) {
       return {
@@ -72,23 +60,13 @@ export class AuthenticateSsoUseCase {
       };
     }
 
-    const existingUser =
-      await this.userRepository.findByEmail(
-        profile.email,
-      );
+    const existingUser = await this.userRepository.findByEmail(profile.email);
 
     if (existingUser) {
-      return this.createIdentity(
-        provider,
-        profile,
-        existingUser.getId(),
-      );
+      return this.createIdentity(provider, profile, existingUser.getId());
     }
 
-    return this.createIdentity(
-      provider,
-      profile,
-    );
+    return this.createIdentity(provider, profile);
   }
 
   private async createIdentity(
@@ -96,22 +74,17 @@ export class AuthenticateSsoUseCase {
     profile: SsoUserProfile,
     userId?: string,
   ): Promise<AuthenticateSsoOutput> {
-    const identityUserId =
-      userId ?? randomUUID();
+    const identityUserId = userId ?? randomUUID();
 
-    const externalIdentity =
-      ExternalIdentity.create({
-        id: randomUUID(),
-        userId: identityUserId,
-        provider,
-        providerUserId:
-          profile.providerUserId,
-        email: profile.email,
-      });
+    const externalIdentity = ExternalIdentity.create({
+      id: randomUUID(),
+      userId: identityUserId,
+      provider,
+      providerUserId: profile.providerUserId,
+      email: profile.email,
+    });
 
-    await this.externalIdentityRepository.save(
-      externalIdentity,
-    );
+    await this.externalIdentityRepository.save(externalIdentity);
 
     return {
       userId: identityUserId,

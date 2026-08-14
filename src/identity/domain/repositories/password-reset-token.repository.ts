@@ -1,13 +1,9 @@
 import { PasswordResetToken } from '../entities/password-reset-token.entity';
 
 export interface PasswordResetTokenRepository {
-  findByUserId(
-    userId: string,
-  ): Promise<PasswordResetToken | null>;
+  findByUserId(userId: string): Promise<PasswordResetToken | null>;
 
-  findByTokenHash(
-    tokenHash: string,
-  ): Promise<PasswordResetToken | null>;
+  findByTokenHash(tokenHash: string): Promise<PasswordResetToken | null>;
 
   save(token: PasswordResetToken): Promise<void>;
 }

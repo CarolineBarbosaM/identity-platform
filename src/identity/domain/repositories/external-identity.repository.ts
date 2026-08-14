@@ -6,13 +6,9 @@ export interface ExternalIdentityRepository {
     providerUserId: string,
   ): Promise<ExternalIdentity | null>;
 
-  findByUserId(
-    userId: string,
-  ): Promise<ExternalIdentity[]>;
+  findByUserId(userId: string): Promise<ExternalIdentity[]>;
 
-  save(
-    externalIdentity: ExternalIdentity,
-  ): Promise<void>;
+  save(externalIdentity: ExternalIdentity): Promise<void>;
 }
 
 export const EXTERNAL_IDENTITY_REPOSITORY = Symbol(

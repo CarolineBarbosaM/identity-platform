@@ -3,16 +3,12 @@ import { InjectRepository } from '@nestjs/typeorm';
 import { Repository } from 'typeorm';
 
 import { ExternalIdentity } from '../../../domain/entities/external-identity.entity';
-import type {
-  ExternalIdentityRepository,
-} from '../../../domain/repositories/external-identity.repository';
+import type { ExternalIdentityRepository } from '../../../domain/repositories/external-identity.repository';
 
 import { ExternalIdentityOrmEntity } from '../entities/external-identity.orm-entity';
 
 @Injectable()
-export class PostgresExternalIdentityRepository
-  implements ExternalIdentityRepository
-{
+export class PostgresExternalIdentityRepository implements ExternalIdentityRepository {
   constructor(
     @InjectRepository(ExternalIdentityOrmEntity)
     private readonly repository: Repository<ExternalIdentityOrmEntity>,
@@ -42,9 +38,7 @@ export class PostgresExternalIdentityRepository
     });
   }
 
-  async findByUserId(
-    userId: string,
-  ): Promise<ExternalIdentity[]> {
+  async findByUserId(userId: string): Promise<ExternalIdentity[]> {
     const entities = await this.repository.find({
       where: {
         userId,
@@ -62,15 +56,12 @@ export class PostgresExternalIdentityRepository
     );
   }
 
-  async save(
-    externalIdentity: ExternalIdentity,
-  ): Promise<void> {
+  async save(externalIdentity: ExternalIdentity): Promise<void> {
     await this.repository.save({
       id: externalIdentity.getId(),
       userId: externalIdentity.getUserId(),
       provider: externalIdentity.getProvider(),
-      providerUserId:
-        externalIdentity.getProviderUserId(),
+      providerUserId: externalIdentity.getProviderUserId(),
       email: externalIdentity.getEmail(),
     });
   }

@@ -12,14 +12,12 @@ import { User } from '../../domain/entities/user.entity';
 
 describe('CreateUserUseCase', () => {
   it('should create a user with a password credential', async () => {
-    const userRepository =
-      new InMemoryUserRepository();
+    const userRepository = new InMemoryUserRepository();
 
     const passwordCredentialRepository =
       new InMemoryPasswordCredentialRepository();
 
-    const passwordHasher =
-      new FakePasswordHasher();
+    const passwordHasher = new FakePasswordHasher();
 
     const clock = new SystemClock();
 
@@ -45,48 +43,34 @@ describe('CreateUserUseCase', () => {
 
     expect(result.user.getName()).toBe('Caroline');
 
-    expect(result.user.getEmail()).toBe(
-      'caroline@example.com',
-    );
+    expect(result.user.getEmail()).toBe('caroline@example.com');
 
-    expect(result.user.getStatus()).toBe(
-      'PENDING_EMAIL_VERIFICATION',
-    );
+    expect(result.user.getStatus()).toBe('PENDING_EMAIL_VERIFICATION');
 
-    const savedUser =
-      await userRepository.findByEmail(
-        'caroline@example.com',
-      );
+    const savedUser = await userRepository.findByEmail('caroline@example.com');
 
     expect(savedUser).not.toBeNull();
 
-    const credential =
-      await passwordCredentialRepository.findByUserId(
-        result.user.getId(),
-      );
+    const credential = await passwordCredentialRepository.findByUserId(
+      result.user.getId(),
+    );
 
     expect(credential).not.toBeNull();
 
-    expect(
-      credential?.getPasswordHash(),
-    ).toBe('hashed-password123');
+    expect(credential?.getPasswordHash()).toBe('hashed-password123');
 
-    expect(
-      createEmailVerificationToken.execute,
-    ).toHaveBeenCalledWith({
+    expect(createEmailVerificationToken.execute).toHaveBeenCalledWith({
       userId: result.user.getId(),
     });
   });
 
   it('should not create a user with an existing email', async () => {
-    const userRepository =
-      new InMemoryUserRepository();
+    const userRepository = new InMemoryUserRepository();
 
     const passwordCredentialRepository =
       new InMemoryPasswordCredentialRepository();
 
-    const passwordHasher =
-      new FakePasswordHasher();
+    const passwordHasher = new FakePasswordHasher();
 
     const clock = new SystemClock();
 
@@ -119,12 +103,8 @@ describe('CreateUserUseCase', () => {
         email: 'caroline@example.com',
         password: 'password123',
       }),
-    ).rejects.toThrow(
-      'User with this email already exists',
-    );
+    ).rejects.toThrow('User with this email already exists');
 
-    expect(
-      createEmailVerificationToken.execute,
-    ).not.toHaveBeenCalled();
+    expect(createEmailVerificationToken.execute).not.toHaveBeenCalled();
   });
 });

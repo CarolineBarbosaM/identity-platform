@@ -1,16 +1,10 @@
 import { AuthenticateUser } from './authenticate-user.use-case';
 
-import type {
-  PasswordCredentialRepository,
-} from '../../domain/repositories/password-credential.repository';
+import type { PasswordCredentialRepository } from '../../domain/repositories/password-credential.repository';
 
-import type {
-  PasswordHasher,
-} from '../../domain/services/password-hasher';
+import type { PasswordHasher } from '../../domain/services/password-hasher';
 
-import type {
-  TwoFactorAuthenticationRepository,
-} from '../../domain/repositories/two-factor-authentication.repository';
+import type { TwoFactorAuthenticationRepository } from '../../domain/repositories/two-factor-authentication.repository';
 
 describe('AuthenticateUser', () => {
   it('should authenticate a user with a valid password', async () => {
@@ -39,18 +33,14 @@ describe('AuthenticateUser', () => {
       password: 'plain-password',
     });
 
-    expect(repository.findByUserId).toHaveBeenCalledWith(
-      'user-id',
-    );
+    expect(repository.findByUserId).toHaveBeenCalledWith('user-id');
 
     expect(passwordHasher.compare).toHaveBeenCalledWith(
       'plain-password',
       'hashed-password',
     );
 
-    expect(
-      twoFactorRepository.findByUserId,
-    ).toHaveBeenCalledWith('user-id');
+    expect(twoFactorRepository.findByUserId).toHaveBeenCalledWith('user-id');
 
     expect(result).toEqual({
       authenticated: true,
@@ -82,15 +72,11 @@ describe('AuthenticateUser', () => {
       password: 'plain-password',
     });
 
-    expect(repository.findByUserId).toHaveBeenCalledWith(
-      'user-id',
-    );
+    expect(repository.findByUserId).toHaveBeenCalledWith('user-id');
 
     expect(passwordHasher.compare).not.toHaveBeenCalled();
 
-    expect(
-      twoFactorRepository.findByUserId,
-    ).not.toHaveBeenCalled();
+    expect(twoFactorRepository.findByUserId).not.toHaveBeenCalled();
 
     expect(result).toEqual({
       authenticated: false,
@@ -124,18 +110,14 @@ describe('AuthenticateUser', () => {
       password: 'wrong-password',
     });
 
-    expect(repository.findByUserId).toHaveBeenCalledWith(
-      'user-id',
-    );
+    expect(repository.findByUserId).toHaveBeenCalledWith('user-id');
 
     expect(passwordHasher.compare).toHaveBeenCalledWith(
       'wrong-password',
       'hashed-password',
     );
 
-    expect(
-      twoFactorRepository.findByUserId,
-    ).not.toHaveBeenCalled();
+    expect(twoFactorRepository.findByUserId).not.toHaveBeenCalled();
 
     expect(result).toEqual({
       authenticated: false,

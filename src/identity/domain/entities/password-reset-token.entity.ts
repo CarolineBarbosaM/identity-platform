@@ -45,15 +45,11 @@ export class PasswordResetToken {
 
   consume(): void {
     if (this.isUsed()) {
-      throw new Error(
-        'Password reset token has already been used',
-      );
+      throw new Error('Password reset token has already been used');
     }
 
     if (this.isExpired()) {
-      throw new Error(
-        'Password reset token has expired',
-      );
+      throw new Error('Password reset token has expired');
     }
 
     this.usedAt = this.clock.now();

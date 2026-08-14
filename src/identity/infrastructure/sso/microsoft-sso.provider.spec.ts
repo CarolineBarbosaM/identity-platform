@@ -7,8 +7,7 @@ describe('MicrosoftSsoProvider', () => {
     process.env = {
       ...originalEnv,
       MICROSOFT_SSO_CLIENT_ID: 'microsoft-client-id',
-      MICROSOFT_SSO_CLIENT_SECRET:
-        'microsoft-client-secret',
+      MICROSOFT_SSO_CLIENT_SECRET: 'microsoft-client-secret',
       MICROSOFT_SSO_REDIRECT_URI:
         'http://localhost:3000/auth/sso/microsoft/callback',
     };
@@ -19,22 +18,15 @@ describe('MicrosoftSsoProvider', () => {
   });
 
   it('should return the microsoft provider name', () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
 
-    expect(provider.getName()).toBe(
-      'microsoft',
-    );
+    expect(provider.getName()).toBe('microsoft');
   });
 
   it('should create an authorization url', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
 
-    const result =
-      await provider.createAuthorizationUrl(
-        'state-123',
-      );
+    const result = await provider.createAuthorizationUrl('state-123');
 
     expect(result.state).toBe('state-123');
 
@@ -42,104 +34,89 @@ describe('MicrosoftSsoProvider', () => {
       'https://login.microsoftonline.com/common/oauth2/v2.0/authorize',
     );
 
-    expect(result.authorizationUrl).toContain(
-      'client_id=microsoft-client-id',
-    );
+    expect(result.authorizationUrl).toContain('client_id=microsoft-client-id');
 
-    expect(result.authorizationUrl).toContain(
-      'response_type=code',
-    );
+    expect(result.authorizationUrl).toContain('response_type=code');
 
-    expect(result.authorizationUrl).toContain(
-      'state=state-123',
-    );
+    expect(result.authorizationUrl).toContain('state=state-123');
   });
 
   it('should authenticate a user with microsoft', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
 
-    const fetchMock =
-      jest
-        .spyOn(global, 'fetch')
-        .mockImplementation(
-          async (
-            input: RequestInfo | URL,
-            init?: RequestInit,
-          ) => {
-            const url = input.toString();
+    const idTokenPayload = Buffer.from(
+      JSON.stringify({
+        oid: 'microsoft-object-id',
+        email: 'caroline@example.com',
+        preferred_username: 'caroline@example.com',
+        name: 'Caroline Barbosa',
+        given_name: 'Caroline',
+        family_name: 'Barbosa',
+        email_verified: true,
+      }),
+    ).toString('base64url');
 
-            if (
-              url.includes(
-                '/oauth2/v2.0/token',
-              )
-            ) {
-              expect(init?.method).toBe('POST');
+    const idToken = `header.${idTokenPayload}.signature`;
 
-              return new Response(
-                JSON.stringify({
-                  access_token:
-                    'microsoft-access-token',
-                }),
-                {
-                  status: 200,
-                  headers: {
-                    'Content-Type':
-                      'application/json',
-                  },
+    const fetchMock = jest
+      .spyOn(global, 'fetch')
+      .mockImplementation(
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url = input.toString();
+
+          if (url.includes('/oauth2/v2.0/token')) {
+            expect(init?.method).toBe('POST');
+
+            return new Response(
+              JSON.stringify({
+                access_token: 'microsoft-access-token',
+                id_token: idToken,
+              }),
+              {
+                status: 200,
+                headers: {
+                  'Content-Type': 'application/json',
                 },
-              );
-            }
-
-            if (
-              url.includes(
-                'graph.microsoft.com/v1.0/me',
-              )
-            ) {
-              expect(
-                init?.headers,
-              ).toEqual({
-                Authorization:
-                  'Bearer microsoft-access-token',
-              });
-
-              return new Response(
-                JSON.stringify({
-                  id: 'microsoft-user-id',
-                  displayName:
-                    'Caroline Barbosa',
-                  givenName: 'Caroline',
-                  surname: 'Barbosa',
-                  mail: 'caroline@example.com',
-                  userPrincipalName:
-                    'caroline@example.com',
-                }),
-                {
-                  status: 200,
-                  headers: {
-                    'Content-Type':
-                      'application/json',
-                  },
-                },
-              );
-            }
-
-            throw new Error(
-              `Unexpected fetch url: ${url}`,
+              },
             );
-          },
-        );
+          }
 
-    const result =
-      await provider.authenticate(
-        'authorization-code',
-        'state-123',
+          if (url.includes('graph.microsoft.com/v1.0/me')) {
+            expect(init?.headers).toEqual({
+              Authorization: 'Bearer microsoft-access-token',
+            });
+
+            return new Response(
+              JSON.stringify({
+                id: 'microsoft-user-id',
+                displayName: 'Caroline Barbosa',
+                givenName: 'Caroline',
+                surname: 'Barbosa',
+                mail: 'caroline@example.com',
+                userPrincipalName: 'caroline@example.com',
+              }),
+              {
+                status: 200,
+                headers: {
+                  'Content-Type': 'application/json',
+                },
+              },
+            );
+          }
+
+          throw new Error(`Unexpected fetch url: ${url}`);
+        },
       );
+
+    const result = await provider.authenticate(
+      'authorization-code',
+      'state-123',
+    );
 
     expect(result).toEqual({
       providerUserId: 'microsoft-user-id',
       email: 'caroline@example.com',
-      emailVerified: false,
+      emailVerified: true,
       name: 'Caroline Barbosa',
       firstName: 'Caroline',
       lastName: 'Barbosa',
@@ -151,120 +128,137 @@ describe('MicrosoftSsoProvider', () => {
   });
 
   it('should use userPrincipalName when mail is unavailable', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
+
+    const idTokenPayload = Buffer.from(
+      JSON.stringify({
+        oid: 'microsoft-object-id',
+        preferred_username: 'caroline@example.com',
+        name: 'Caroline',
+        given_name: 'Caroline',
+        family_name: 'Barbosa',
+        email_verified: true,
+      }),
+    ).toString('base64url');
+
+    const idToken = `header.${idTokenPayload}.signature`;
 
     jest
       .spyOn(global, 'fetch')
-      .mockImplementation(
-        async (
-          input: RequestInfo | URL,
-        ) => {
-          const url = input.toString();
+      .mockImplementation(async (input: RequestInfo | URL) => {
+        const url = input.toString();
 
-          if (
-            url.includes(
-              '/oauth2/v2.0/token',
-            )
-          ) {
-            return new Response(
-              JSON.stringify({
-                access_token:
-                  'microsoft-access-token',
-              }),
-              { status: 200 },
-            );
-          }
-
+        if (url.includes('/oauth2/v2.0/token')) {
           return new Response(
             JSON.stringify({
-              id: 'microsoft-user-id',
-              displayName: 'Caroline',
-              givenName: 'Caroline',
-              surname: 'Barbosa',
-              userPrincipalName:
-                'caroline@example.com',
+              access_token: 'microsoft-access-token',
+              id_token: idToken,
             }),
-            { status: 200 },
+            {
+              status: 200,
+            },
           );
-        },
-      );
+        }
 
-    const result =
-      await provider.authenticate(
-        'authorization-code',
-        'state-123',
-      );
+        return new Response(
+          JSON.stringify({
+            id: 'microsoft-user-id',
+            displayName: 'Caroline Barbosa',
+            givenName: 'Caroline',
+            surname: 'Barbosa',
+            userPrincipalName: 'caroline@example.com',
+          }),
+          {
+            status: 200,
+          },
+        );
+      });
 
-    expect(result.email).toBe(
-      'caroline@example.com',
+    const result = await provider.authenticate(
+      'authorization-code',
+      'state-123',
     );
+
+    expect(result.email).toBe('caroline@example.com');
+
+    expect(result.emailVerified).toBe(true);
 
     jest.restoreAllMocks();
   });
 
   it('should reject when microsoft does not return an access token', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
 
-    jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(
-        new Response(
-          JSON.stringify({}),
-          {
-            status: 200,
-          },
-        ),
-      );
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(JSON.stringify({}), {
+        status: 200,
+      }),
+    );
 
     await expect(
-      provider.authenticate(
-        'authorization-code',
-        'state-123',
+      provider.authenticate('authorization-code', 'state-123'),
+    ).rejects.toThrow('Microsoft access token was not returned');
+
+    jest.restoreAllMocks();
+  });
+
+  it('should reject when microsoft does not return an id token', async () => {
+    const provider = new MicrosoftSsoProvider();
+
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(
+        JSON.stringify({
+          access_token: 'microsoft-access-token',
+        }),
+        {
+          status: 200,
+        },
       ),
-    ).rejects.toThrow(
-      'Microsoft access token was not returned',
     );
+
+    await expect(
+      provider.authenticate('authorization-code', 'state-123'),
+    ).rejects.toThrow('Microsoft ID token was not returned');
 
     jest.restoreAllMocks();
   });
 
   it('should reject when token exchange fails', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
 
-    jest
-      .spyOn(global, 'fetch')
-      .mockResolvedValue(
-        new Response(null, {
-          status: 400,
-        }),
-      );
+    jest.spyOn(global, 'fetch').mockResolvedValue(
+      new Response(null, {
+        status: 400,
+      }),
+    );
 
     await expect(
-      provider.authenticate(
-        'authorization-code',
-        'state-123',
-      ),
-    ).rejects.toThrow(
-      'Failed to authenticate with Microsoft',
-    );
+      provider.authenticate('authorization-code', 'state-123'),
+    ).rejects.toThrow('Failed to authenticate with Microsoft');
 
     jest.restoreAllMocks();
   });
 
   it('should reject when microsoft profile request fails', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
+
+    const idTokenPayload = Buffer.from(
+      JSON.stringify({
+        oid: 'microsoft-object-id',
+        preferred_username: 'caroline@example.com',
+        email_verified: true,
+      }),
+    ).toString('base64url');
+
+    const idToken = `header.${idTokenPayload}.signature`;
 
     jest
       .spyOn(global, 'fetch')
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            access_token:
-              'microsoft-access-token',
+            access_token: 'microsoft-access-token',
+            id_token: idToken,
           }),
           {
             status: 200,
@@ -278,28 +272,34 @@ describe('MicrosoftSsoProvider', () => {
       );
 
     await expect(
-      provider.authenticate(
-        'authorization-code',
-        'state-123',
-      ),
-    ).rejects.toThrow(
-      'Failed to retrieve Microsoft user profile',
-    );
+      provider.authenticate('authorization-code', 'state-123'),
+    ).rejects.toThrow('Failed to retrieve Microsoft user profile');
 
     jest.restoreAllMocks();
   });
 
   it('should reject when microsoft does not return an email', async () => {
-    const provider =
-      new MicrosoftSsoProvider();
+    const provider = new MicrosoftSsoProvider();
+
+    const idTokenPayload = Buffer.from(
+      JSON.stringify({
+        oid: 'microsoft-object-id',
+        name: 'Caroline',
+        given_name: 'Caroline',
+        family_name: 'Barbosa',
+        email_verified: false,
+      }),
+    ).toString('base64url');
+
+    const idToken = `header.${idTokenPayload}.signature`;
 
     jest
       .spyOn(global, 'fetch')
       .mockResolvedValueOnce(
         new Response(
           JSON.stringify({
-            access_token:
-              'microsoft-access-token',
+            access_token: 'microsoft-access-token',
+            id_token: idToken,
           }),
           {
             status: 200,
@@ -319,13 +319,8 @@ describe('MicrosoftSsoProvider', () => {
       );
 
     await expect(
-      provider.authenticate(
-        'authorization-code',
-        'state-123',
-      ),
-    ).rejects.toThrow(
-      'Microsoft user email was not returned',
-    );
+      provider.authenticate('authorization-code', 'state-123'),
+    ).rejects.toThrow('Microsoft user email was not returned');
 
     jest.restoreAllMocks();
   });

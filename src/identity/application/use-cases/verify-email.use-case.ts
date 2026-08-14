@@ -2,29 +2,17 @@ import { Inject } from '@nestjs/common';
 
 import { User } from '../../domain/entities/user.entity';
 
-import {
-  USER_REPOSITORY,
-} from '../../domain/repositories/user.repository';
+import { USER_REPOSITORY } from '../../domain/repositories/user.repository';
 
-import type {
-  UserRepository,
-} from '../../domain/repositories/user.repository';
+import type { UserRepository } from '../../domain/repositories/user.repository';
 
-import {
-  EMAIL_VERIFICATION_TOKEN_REPOSITORY,
-} from '../../domain/repositories/email-verification-token.repository';
+import { EMAIL_VERIFICATION_TOKEN_REPOSITORY } from '../../domain/repositories/email-verification-token.repository';
 
-import type {
-  EmailVerificationTokenRepository,
-} from '../../domain/repositories/email-verification-token.repository';
+import type { EmailVerificationTokenRepository } from '../../domain/repositories/email-verification-token.repository';
 
-import {
-  TOKEN_HASHER,
-} from '../../domain/services/token-hasher';
+import { TOKEN_HASHER } from '../../domain/services/token-hasher';
 
-import type {
-  TokenHasher,
-} from '../../domain/services/token-hasher';
+import type { TokenHasher } from '../../domain/services/token-hasher';
 
 export interface VerifyEmailInput {
   userId: string;
@@ -44,9 +32,7 @@ export class VerifyEmailUseCase {
   ) {}
 
   async execute(input: VerifyEmailInput): Promise<void> {
-    const user = await this.userRepository.findById(
-      input.userId,
-    );
+    const user = await this.userRepository.findById(input.userId);
 
     if (!user) {
       throw new Error('User not found');
@@ -56,39 +42,29 @@ export class VerifyEmailUseCase {
       throw new Error('User email is already verified');
     }
 
-    const verificationToken =
-      await this.tokenRepository.findByUserId(
-        input.userId,
-      );
+    const verificationToken = await this.tokenRepository.findByUserId(
+      input.userId,
+    );
 
     if (!verificationToken) {
-      throw new Error(
-        'Email verification token not found',
-      );
+      throw new Error('Email verification token not found');
     }
 
     if (verificationToken.isUsed()) {
-      throw new Error(
-        'Email verification token has already been used',
-      );
+      throw new Error('Email verification token has already been used');
     }
 
     if (verificationToken.isExpired()) {
-      throw new Error(
-        'Email verification token has expired',
-      );
+      throw new Error('Email verification token has expired');
     }
 
-    const isValid =
-      await this.tokenHasher.compare(
-        input.token,
-        verificationToken.getTokenHash(),
-      );
+    const isValid = await this.tokenHasher.compare(
+      input.token,
+      verificationToken.getTokenHash(),
+    );
 
     if (!isValid) {
-      throw new Error(
-        'Invalid email verification token',
-      );
+      throw new Error('Invalid email verification token');
     }
 
     user.verifyEmail();
@@ -97,8 +73,6 @@ export class VerifyEmailUseCase {
 
     verificationToken.markAsUsed();
 
-    await this.tokenRepository.save(
-      verificationToken,
-    );
+    await this.tokenRepository.save(verificationToken);
   }
 }

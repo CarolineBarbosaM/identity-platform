@@ -10,33 +10,24 @@ import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use
 import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
 import { SsoProviderRegistry } from '../../application/services/sso-provider-registry';
 import { AuthenticateSsoUseCase } from '../../application/use-cases/authenticate-sso.use-case';
-import { SsoStateStore } from '../../../identity/domain/services/sso-state-store'; 
-
+import { SsoStateStore } from '../../../identity/domain/services/sso-state-store';
 
 describe('IdentityController - email verification', () => {
   it('should verify the user email', async () => {
-    const createUser =
-      {} as CreateUserUseCase;
+    const createUser = {} as CreateUserUseCase;
 
-    const authenticateUser =
-      {} as AuthenticateUser;
+    const authenticateUser = {} as AuthenticateUser;
 
-    const createSession =
-      {} as CreateSessionUseCase;
+    const createSession = {} as CreateSessionUseCase;
 
-    const refreshSession =
-      {} as RefreshSessionUseCase;
+    const refreshSession = {} as RefreshSessionUseCase;
 
-    const logoutSession =
-      {} as LogoutSessionUseCase;
+    const logoutSession = {} as LogoutSessionUseCase;
 
-    const resetPassword =
-      {} as ResetPasswordUseCase;
+    const resetPassword = {} as ResetPasswordUseCase;
 
     const verifyEmail = {
-      execute: jest
-        .fn()
-        .mockResolvedValue(undefined),
+      execute: jest.fn().mockResolvedValue(undefined),
     } as unknown as VerifyEmailUseCase;
 
     const controller = new IdentityController(
@@ -58,41 +49,29 @@ describe('IdentityController - email verification', () => {
       token: 'verification-token',
     });
 
-    expect(
-      verifyEmail.execute,
-    ).toHaveBeenCalledWith({
+    expect(verifyEmail.execute).toHaveBeenCalledWith({
       userId: 'user-id',
       token: 'verification-token',
     });
   });
 
   it('should propagate verification errors', async () => {
-    const createUser =
-      {} as CreateUserUseCase;
+    const createUser = {} as CreateUserUseCase;
 
-    const authenticateUser =
-      {} as AuthenticateUser;
+    const authenticateUser = {} as AuthenticateUser;
 
-    const createSession =
-      {} as CreateSessionUseCase;
+    const createSession = {} as CreateSessionUseCase;
 
-    const refreshSession =
-      {} as RefreshSessionUseCase;
+    const refreshSession = {} as RefreshSessionUseCase;
 
-    const logoutSession =
-      {} as LogoutSessionUseCase;
+    const logoutSession = {} as LogoutSessionUseCase;
 
-    const resetPassword =
-      {} as ResetPasswordUseCase;
+    const resetPassword = {} as ResetPasswordUseCase;
 
     const verifyEmail = {
       execute: jest
         .fn()
-        .mockRejectedValue(
-          new Error(
-            'Invalid email verification token',
-          ),
-        ),
+        .mockRejectedValue(new Error('Invalid email verification token')),
     } as unknown as VerifyEmailUseCase;
 
     const controller = new IdentityController(
@@ -114,8 +93,6 @@ describe('IdentityController - email verification', () => {
         userId: 'user-id',
         token: 'wrong-token',
       }),
-    ).rejects.toThrow(
-      'Invalid email verification token',
-    );
+    ).rejects.toThrow('Invalid email verification token');
   });
 });

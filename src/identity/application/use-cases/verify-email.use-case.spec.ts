@@ -14,15 +14,11 @@ import { FakeClock } from '../../../shared/domain/fake-clock';
 
 describe('VerifyEmailUseCase', () => {
   const createDependencies = () => {
-    const clock = new FakeClock(
-      new Date('2026-08-12T10:00:00.000Z'),
-    );
+    const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 
-    const userRepository =
-      new InMemoryUserRepository();
+    const userRepository = new InMemoryUserRepository();
 
-    const tokenRepository =
-      new InMemoryEmailVerificationTokenRepository();
+    const tokenRepository = new InMemoryEmailVerificationTokenRepository();
 
     const tokenHasher = new FakeTokenHasher();
 
@@ -40,9 +36,7 @@ describe('VerifyEmailUseCase', () => {
     };
   };
 
-  const createUser = (
-    clock: FakeClock,
-  ): User => {
+  const createUser = (clock: FakeClock): User => {
     return User.create(
       {
         id: 'user-id',
@@ -62,21 +56,15 @@ describe('VerifyEmailUseCase', () => {
         id: 'verification-token-id',
         userId: 'user-id',
         tokenHash,
-        expiresAt: new Date(
-          '2026-08-12T10:30:00.000Z',
-        ),
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
       },
       clock,
     );
   };
 
   it('should verify the user email', async () => {
-    const {
-      clock,
-      userRepository,
-      tokenRepository,
-      useCase,
-    } = createDependencies();
+    const { clock, userRepository, tokenRepository, useCase } =
+      createDependencies();
 
     const user = createUser(clock);
     const token = createToken(clock);
@@ -89,19 +77,11 @@ describe('VerifyEmailUseCase', () => {
       token: 'verification-token',
     });
 
-    const updatedUser =
-      await userRepository.findById(
-        'user-id',
-      );
+    const updatedUser = await userRepository.findById('user-id');
 
-    const updatedToken =
-      await tokenRepository.findByUserId(
-        'user-id',
-      );
+    const updatedToken = await tokenRepository.findByUserId('user-id');
 
-    expect(
-      updatedUser?.getEmailVerifiedAt(),
-    ).toEqual(
+    expect(updatedUser?.getEmailVerifiedAt()).toEqual(
       new Date('2026-08-12T10:00:00.000Z'),
     );
 
@@ -109,9 +89,7 @@ describe('VerifyEmailUseCase', () => {
   });
 
   it('should throw when user does not exist', async () => {
-    const {
-      useCase,
-    } = createDependencies();
+    const { useCase } = createDependencies();
 
     await expect(
       useCase.execute({
@@ -122,11 +100,7 @@ describe('VerifyEmailUseCase', () => {
   });
 
   it('should throw when token does not exist', async () => {
-    const {
-      clock,
-      userRepository,
-      useCase,
-    } = createDependencies();
+    const { clock, userRepository, useCase } = createDependencies();
 
     const user = createUser(clock);
 
@@ -137,18 +111,12 @@ describe('VerifyEmailUseCase', () => {
         userId: 'user-id',
         token: 'verification-token',
       }),
-    ).rejects.toThrow(
-      'Email verification token not found',
-    );
+    ).rejects.toThrow('Email verification token not found');
   });
 
   it('should throw when token is invalid', async () => {
-    const {
-      clock,
-      userRepository,
-      tokenRepository,
-      useCase,
-    } = createDependencies();
+    const { clock, userRepository, tokenRepository, useCase } =
+      createDependencies();
 
     const user = createUser(clock);
     const token = createToken(clock);
@@ -161,18 +129,12 @@ describe('VerifyEmailUseCase', () => {
         userId: 'user-id',
         token: 'wrong-token',
       }),
-    ).rejects.toThrow(
-      'Invalid email verification token',
-    );
+    ).rejects.toThrow('Invalid email verification token');
   });
 
   it('should throw when token is expired', async () => {
-    const {
-      clock,
-      userRepository,
-      tokenRepository,
-      useCase,
-    } = createDependencies();
+    const { clock, userRepository, tokenRepository, useCase } =
+      createDependencies();
 
     const user = createUser(clock);
     const token = createToken(clock);
@@ -180,27 +142,19 @@ describe('VerifyEmailUseCase', () => {
     await userRepository.save(user);
     await tokenRepository.save(token);
 
-    clock.setNow(
-      new Date('2026-08-12T10:30:00.000Z'),
-    );
+    clock.setNow(new Date('2026-08-12T10:30:00.000Z'));
 
     await expect(
       useCase.execute({
         userId: 'user-id',
         token: 'verification-token',
       }),
-    ).rejects.toThrow(
-      'Email verification token has expired',
-    );
+    ).rejects.toThrow('Email verification token has expired');
   });
 
   it('should throw when token was already used', async () => {
-    const {
-      clock,
-      userRepository,
-      tokenRepository,
-      useCase,
-    } = createDependencies();
+    const { clock, userRepository, tokenRepository, useCase } =
+      createDependencies();
 
     const user = createUser(clock);
     const token = createToken(clock);
@@ -215,18 +169,12 @@ describe('VerifyEmailUseCase', () => {
         userId: 'user-id',
         token: 'verification-token',
       }),
-    ).rejects.toThrow(
-      'Email verification token has already been used',
-    );
+    ).rejects.toThrow('Email verification token has already been used');
   });
 
   it('should throw when email is already verified', async () => {
-    const {
-      clock,
-      userRepository,
-      tokenRepository,
-      useCase,
-    } = createDependencies();
+    const { clock, userRepository, tokenRepository, useCase } =
+      createDependencies();
 
     const user = createUser(clock);
     const token = createToken(clock);
@@ -241,8 +189,6 @@ describe('VerifyEmailUseCase', () => {
         userId: 'user-id',
         token: 'verification-token',
       }),
-    ).rejects.toThrow(
-      'User email is already verified',
-    );
+    ).rejects.toThrow('User email is already verified');
   });
 });

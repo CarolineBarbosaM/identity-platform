@@ -6,7 +6,7 @@ import { IdentityController } from './infrastructure/http/identity.controller';
 import { AuthenticateUser } from './application/use-cases/authenticate-user.use-case';
 import { AuthenticateSsoUseCase } from './application/use-cases/authenticate-sso.use-case';
 import { CreatePasswordCredential } from './application/use-cases/create-password-credential.use-case';
-import { CreateSessionUseCase } from './application/use-cases/create-session.use-case'; 
+import { CreateSessionUseCase } from './application/use-cases/create-session.use-case';
 import { RefreshSessionUseCase } from './application/use-cases/refresh-session.use-case';
 import { LogoutSessionUseCase } from './application/use-cases/logout-session.use-case';
 import { CreateUserUseCase } from './application/use-cases/create-user.use-case';
@@ -20,9 +20,7 @@ import { SsoProviderRegistry } from './application/services/sso-provider-registr
 import { GoogleSsoProvider } from './infrastructure/sso/google-sso.provider';
 import { MicrosoftSsoProvider } from './infrastructure/sso/microsoft-sso.provider';
 
-import {
-  SSO_PROVIDERS,
-} from './domain/services/sso-provider';
+import { SSO_PROVIDERS } from './domain/services/sso-provider';
 
 import { Argon2PasswordHasher } from './infrastructure/security/argon2-password-hasher';
 import { Argon2TokenHasher } from './infrastructure/security/argon2-token-hasher';
@@ -81,9 +79,7 @@ import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
     ]),
   ],
 
-  controllers: [
-    IdentityController,
-  ],
+  controllers: [IdentityController],
 
   providers: [
     AuthenticateUser,
@@ -110,14 +106,8 @@ import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
       useFactory: (
         googleSsoProvider: GoogleSsoProvider,
         microsoftSsoProvider: MicrosoftSsoProvider,
-      ) => [
-        googleSsoProvider,
-        microsoftSsoProvider,
-      ],
-      inject: [
-        GoogleSsoProvider,
-        MicrosoftSsoProvider,
-      ],
+      ) => [googleSsoProvider, microsoftSsoProvider],
+      inject: [GoogleSsoProvider, MicrosoftSsoProvider],
     },
 
     AuthGuard,
@@ -179,18 +169,12 @@ import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
 
     {
       provide: ACCESS_TOKEN_GENERATOR,
-      useFactory: () =>
-        new JwtAccessTokenGenerator(
-          'development-secret',
-        ),
+      useFactory: () => new JwtAccessTokenGenerator('development-secret'),
     },
 
     {
       provide: ACCESS_TOKEN_VERIFIER,
-      useFactory: () =>
-        new JwtAccessTokenVerifier(
-          'development-secret',
-        ),
+      useFactory: () => new JwtAccessTokenVerifier('development-secret'),
     },
 
     {
