@@ -34,9 +34,7 @@ export class TwoFactorAuthentication {
 
   enable(): void {
     if (this.isEnabled()) {
-      throw new Error(
-        'Two-factor authentication is already enabled',
-      );
+      throw new Error('Two-factor authentication is already enabled');
     }
 
     this.enabledAt = this.clock.now();

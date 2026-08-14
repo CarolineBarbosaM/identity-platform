@@ -12,9 +12,7 @@ import { CLOCK } from '../../../../shared/domain/clock';
 import type { Clock } from '../../../../shared/domain/clock';
 
 @Injectable()
-export class PostgresPasswordResetTokenRepository
-  implements PasswordResetTokenRepository
-{
+export class PostgresPasswordResetTokenRepository implements PasswordResetTokenRepository {
   constructor(
     @InjectRepository(PasswordResetTokenOrmEntity)
     private readonly repository: Repository<PasswordResetTokenOrmEntity>,
@@ -23,9 +21,7 @@ export class PostgresPasswordResetTokenRepository
     private readonly clock: Clock,
   ) {}
 
-  async findByUserId(
-    userId: string,
-  ): Promise<PasswordResetToken | null> {
+  async findByUserId(userId: string): Promise<PasswordResetToken | null> {
     const entity = await this.repository.findOne({
       where: {
         userId,
@@ -49,9 +45,7 @@ export class PostgresPasswordResetTokenRepository
     );
   }
 
-  async findByTokenHash(
-    tokenHash: string,
-  ): Promise<PasswordResetToken | null> {
+  async findByTokenHash(tokenHash: string): Promise<PasswordResetToken | null> {
     const entity = await this.repository.findOne({
       where: {
         tokenHash,
@@ -75,9 +69,7 @@ export class PostgresPasswordResetTokenRepository
     );
   }
 
-  async save(
-    token: PasswordResetToken,
-  ): Promise<void> {
+  async save(token: PasswordResetToken): Promise<void> {
     await this.repository.save({
       id: token.getId(),
       userId: token.getUserId(),

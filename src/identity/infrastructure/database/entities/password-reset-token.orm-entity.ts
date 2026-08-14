@@ -1,8 +1,4 @@
-import {
-  Column,
-  Entity,
-  PrimaryColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('password_reset_tokens')
 export class PasswordResetTokenOrmEntity {

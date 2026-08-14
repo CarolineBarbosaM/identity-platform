@@ -5,6 +5,7 @@ export interface SsoUserProfile {
   firstName?: string;
   lastName?: string;
   pictureUrl?: string;
+  emailVerified: boolean;
 }
 
 export interface SsoAuthorization {
@@ -15,14 +16,9 @@ export interface SsoAuthorization {
 export interface SsoProvider {
   getName(): string;
 
-  createAuthorizationUrl(
-    state: string,
-  ): Promise<SsoAuthorization>;
+  createAuthorizationUrl(state: string): Promise<SsoAuthorization>;
 
-  authenticate(
-    code: string,
-    state: string,
-  ): Promise<SsoUserProfile>;
+  authenticate(code: string, state: string): Promise<SsoUserProfile>;
 }
 
 export const SSO_PROVIDERS = Symbol('SSO_PROVIDERS');

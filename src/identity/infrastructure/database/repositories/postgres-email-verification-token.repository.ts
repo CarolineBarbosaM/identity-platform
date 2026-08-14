@@ -11,9 +11,7 @@ import { CLOCK } from '../../../../shared/domain/clock';
 import type { Clock } from '../../../../shared/domain/clock';
 
 @Injectable()
-export class PostgresEmailVerificationTokenRepository
-  implements EmailVerificationTokenRepository
-{
+export class PostgresEmailVerificationTokenRepository implements EmailVerificationTokenRepository {
   constructor(
     @InjectRepository(EmailVerificationTokenOrmEntity)
     private readonly repository: Repository<EmailVerificationTokenOrmEntity>,
@@ -22,9 +20,7 @@ export class PostgresEmailVerificationTokenRepository
     private readonly clock: Clock,
   ) {}
 
-  async findById(
-    id: string,
-  ): Promise<EmailVerificationToken | null> {
+  async findById(id: string): Promise<EmailVerificationToken | null> {
     const entity = await this.repository.findOne({
       where: {
         id,
@@ -49,9 +45,7 @@ export class PostgresEmailVerificationTokenRepository
     );
   }
 
-  async findByUserId(
-    userId: string,
-  ): Promise<EmailVerificationToken | null> {
+  async findByUserId(userId: string): Promise<EmailVerificationToken | null> {
     const entity = await this.repository.findOne({
       where: {
         userId,
@@ -76,9 +70,7 @@ export class PostgresEmailVerificationTokenRepository
     );
   }
 
-  async save(
-    token: EmailVerificationToken,
-  ): Promise<void> {
+  async save(token: EmailVerificationToken): Promise<void> {
     await this.repository.save({
       id: token.getId(),
       userId: token.getUserId(),

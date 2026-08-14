@@ -1,8 +1,4 @@
-import {
-  Column,
-  Entity,
-  PrimaryColumn,
-} from 'typeorm';
+import { Column, Entity, PrimaryColumn } from 'typeorm';
 
 @Entity('external_identities')
 export class ExternalIdentityOrmEntity {

@@ -9,23 +9,17 @@ class FakeClock implements Clock {
   }
 
   advance(milliseconds: number): void {
-    this.currentDate = new Date(
-      this.currentDate.getTime() + milliseconds,
-    );
+    this.currentDate = new Date(this.currentDate.getTime() + milliseconds);
   }
 }
 
 describe('PasswordResetToken', () => {
-  const initialDate = new Date(
-    '2026-08-12T10:00:00.000Z',
-  );
+  const initialDate = new Date('2026-08-12T10:00:00.000Z');
 
   it('should create a password reset token', () => {
     const clock = new FakeClock(initialDate);
 
-    const expiresAt = new Date(
-      '2026-08-12T10:30:00.000Z',
-    );
+    const expiresAt = new Date('2026-08-12T10:30:00.000Z');
 
     const token = PasswordResetToken.create(
       {
@@ -55,9 +49,7 @@ describe('PasswordResetToken', () => {
         id: 'token-id',
         userId: 'user-id',
         tokenHash: 'hashed-token',
-        expiresAt: new Date(
-          '2026-08-12T10:30:00.000Z',
-        ),
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
       },
       clock,
     );
@@ -75,9 +67,7 @@ describe('PasswordResetToken', () => {
         id: 'token-id',
         userId: 'user-id',
         tokenHash: 'hashed-token',
-        expiresAt: new Date(
-          '2026-08-12T10:30:00.000Z',
-        ),
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
       },
       clock,
     );
@@ -87,9 +77,7 @@ describe('PasswordResetToken', () => {
     token.consume();
 
     expect(token.isUsed()).toBe(true);
-    expect(token.getUsedAt()).toEqual(
-      new Date('2026-08-12T10:10:00.000Z'),
-    );
+    expect(token.getUsedAt()).toEqual(new Date('2026-08-12T10:10:00.000Z'));
   });
 
   it('should not consume an expired token', () => {
@@ -100,18 +88,14 @@ describe('PasswordResetToken', () => {
         id: 'token-id',
         userId: 'user-id',
         tokenHash: 'hashed-token',
-        expiresAt: new Date(
-          '2026-08-12T10:30:00.000Z',
-        ),
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
       },
       clock,
     );
 
     clock.advance(30 * 60 * 1000);
 
-    expect(() => token.consume()).toThrow(
-      'Password reset token has expired',
-    );
+    expect(() => token.consume()).toThrow('Password reset token has expired');
 
     expect(token.isUsed()).toBe(false);
   });
@@ -124,9 +108,7 @@ describe('PasswordResetToken', () => {
         id: 'token-id',
         userId: 'user-id',
         tokenHash: 'hashed-token',
-        expiresAt: new Date(
-          '2026-08-12T10:30:00.000Z',
-        ),
+        expiresAt: new Date('2026-08-12T10:30:00.000Z'),
       },
       clock,
     );
@@ -141,17 +123,11 @@ describe('PasswordResetToken', () => {
   it('should rehydrate an existing token', () => {
     const clock = new FakeClock(initialDate);
 
-    const createdAt = new Date(
-      '2026-08-12T09:00:00.000Z',
-    );
+    const createdAt = new Date('2026-08-12T09:00:00.000Z');
 
-    const expiresAt = new Date(
-      '2026-08-12T10:30:00.000Z',
-    );
+    const expiresAt = new Date('2026-08-12T10:30:00.000Z');
 
-    const usedAt = new Date(
-      '2026-08-12T10:10:00.000Z',
-    );
+    const usedAt = new Date('2026-08-12T10:10:00.000Z');
 
     const token = PasswordResetToken.rehydrate(
       {

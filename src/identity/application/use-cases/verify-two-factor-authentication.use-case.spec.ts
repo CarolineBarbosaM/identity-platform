@@ -1,14 +1,8 @@
-import {
-  VerifyTwoFactorAuthenticationUseCase,
-} from './verify-two-factor-authentication.use-case';
+import { VerifyTwoFactorAuthenticationUseCase } from './verify-two-factor-authentication.use-case';
 
-import type {
-  TwoFactorAuthenticationRepository,
-} from '../../domain/repositories/two-factor-authentication.repository';
+import type { TwoFactorAuthenticationRepository } from '../../domain/repositories/two-factor-authentication.repository';
 
-import type {
-  TwoFactorAuthenticator,
-} from '../../domain/services/two-factor-authenticator';
+import type { TwoFactorAuthenticator } from '../../domain/services/two-factor-authenticator';
 
 describe('VerifyTwoFactorAuthenticationUseCase', () => {
   it('should verify a valid two-factor code', async () => {
@@ -24,25 +18,19 @@ describe('VerifyTwoFactorAuthenticationUseCase', () => {
       verifyCode: jest.fn().mockResolvedValue(true),
     } as unknown as TwoFactorAuthenticator;
 
-    const useCase =
-      new VerifyTwoFactorAuthenticationUseCase(
-        repository,
-        authenticator,
-      );
+    const useCase = new VerifyTwoFactorAuthenticationUseCase(
+      repository,
+      authenticator,
+    );
 
     const result = await useCase.execute({
       userId: 'user-id',
       code: '123456',
     });
 
-    expect(repository.findByUserId).toHaveBeenCalledWith(
-      'user-id',
-    );
+    expect(repository.findByUserId).toHaveBeenCalledWith('user-id');
 
-    expect(authenticator.verifyCode).toHaveBeenCalledWith(
-      'secret',
-      '123456',
-    );
+    expect(authenticator.verifyCode).toHaveBeenCalledWith('secret', '123456');
 
     expect(result).toBe(true);
   });
@@ -60,11 +48,10 @@ describe('VerifyTwoFactorAuthenticationUseCase', () => {
       verifyCode: jest.fn().mockResolvedValue(false),
     } as unknown as TwoFactorAuthenticator;
 
-    const useCase =
-      new VerifyTwoFactorAuthenticationUseCase(
-        repository,
-        authenticator,
-      );
+    const useCase = new VerifyTwoFactorAuthenticationUseCase(
+      repository,
+      authenticator,
+    );
 
     const result = await useCase.execute({
       userId: 'user-id',
@@ -84,11 +71,10 @@ describe('VerifyTwoFactorAuthenticationUseCase', () => {
       verifyCode: jest.fn(),
     } as unknown as TwoFactorAuthenticator;
 
-    const useCase =
-      new VerifyTwoFactorAuthenticationUseCase(
-        repository,
-        authenticator,
-      );
+    const useCase = new VerifyTwoFactorAuthenticationUseCase(
+      repository,
+      authenticator,
+    );
 
     const result = await useCase.execute({
       userId: 'user-id',
@@ -97,9 +83,7 @@ describe('VerifyTwoFactorAuthenticationUseCase', () => {
 
     expect(result).toBe(false);
 
-    expect(
-      authenticator.verifyCode,
-    ).not.toHaveBeenCalled();
+    expect(authenticator.verifyCode).not.toHaveBeenCalled();
   });
 
   it('should reject when two-factor authentication is not enabled', async () => {
@@ -115,11 +99,10 @@ describe('VerifyTwoFactorAuthenticationUseCase', () => {
       verifyCode: jest.fn(),
     } as unknown as TwoFactorAuthenticator;
 
-    const useCase =
-      new VerifyTwoFactorAuthenticationUseCase(
-        repository,
-        authenticator,
-      );
+    const useCase = new VerifyTwoFactorAuthenticationUseCase(
+      repository,
+      authenticator,
+    );
 
     const result = await useCase.execute({
       userId: 'user-id',
@@ -128,8 +111,6 @@ describe('VerifyTwoFactorAuthenticationUseCase', () => {
 
     expect(result).toBe(false);
 
-    expect(
-      authenticator.verifyCode,
-    ).not.toHaveBeenCalled();
+    expect(authenticator.verifyCode).not.toHaveBeenCalled();
   });
 });

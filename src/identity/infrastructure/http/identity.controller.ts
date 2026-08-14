@@ -3,6 +3,7 @@ import {
   Controller,
   Get,
   HttpCode,
+  Inject,
   Post,
   Req,
   UnauthorizedException,
@@ -23,6 +24,7 @@ import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-case
 import { SsoProviderRegistry } from '../../application/services/sso-provider-registry';
 import { AuthenticateSsoUseCase } from '../../application/use-cases/authenticate-sso.use-case';
 
+import { SSO_STATE_STORE } from '../../domain/services/sso-state-store';
 import type { SsoStateStore } from '../../domain/services/sso-state-store';
 
 import { AuthGuard } from './auth.guard';
@@ -74,25 +76,23 @@ export class IdentityController {
     private readonly verifyTwoFactorAuthentication: VerifyTwoFactorAuthenticationUseCase,
     private readonly ssoProviderRegistry: SsoProviderRegistry,
     private readonly authenticateSso: AuthenticateSsoUseCase,
+    @Inject(SSO_STATE_STORE)
     private readonly ssoStateStore: SsoStateStore,
   ) {}
 
   @Post('register')
   @HttpCode(201)
-  async register(
-    @Body() request: RegisterRequest,
-  ): Promise<{
+  async register(@Body() request: RegisterRequest): Promise<{
     id: string;
     name: string;
     email: string;
     status: string;
   }> {
-    const { user } =
-      await this.createUser.execute({
-        name: request.name,
-        email: request.email,
-        password: request.password,
-      });
+    const { user } = await this.createUser.execute({
+      name: request.name,
+      email: request.email,
+      password: request.password,
+    });
 
     return {
       id: user.getId(),
@@ -106,15 +106,17 @@ export class IdentityController {
   @HttpCode(200)
   async authenticate(
     @Body() request: AuthenticateRequest,
+    @Req() httpRequest: DeviceRequest,
   ): Promise<{
     authenticated: boolean;
     requiresTwoFactor: boolean;
+    accessToken?: string;
+    refreshToken?: string;
   }> {
-    const authentication =
-      await this.authenticateUser.execute({
-        userId: request.userId,
-        password: request.password,
-      });
+    const authentication = await this.authenticateUser.execute({
+      userId: request.userId,
+      password: request.password,
+    });
 
     if (!authentication.authenticated) {
       throw new UnauthorizedException({
@@ -129,9 +131,23 @@ export class IdentityController {
       };
     }
 
+    const userAgent = httpRequest.headers['user-agent'] ?? 'unknown';
+
+    const ipAddress = httpRequest.ip ?? 'unknown';
+
+    const { accessToken, refreshToken } =
+      await this.createSession.execute({
+        userId: request.userId,
+        deviceName: userAgent,
+        userAgent,
+        ipAddress,
+      });
+
     return {
       authenticated: true,
       requiresTwoFactor: false,
+      accessToken,
+      refreshToken,
     };
   }
 
@@ -163,15 +179,13 @@ export class IdentityController {
     const ipAddress =
       httpRequest.ip ?? 'unknown';
 
-    const {
-      accessToken,
-      refreshToken,
-    } = await this.createSession.execute({
-      userId: request.userId,
-      deviceName: userAgent,
-      userAgent,
-      ipAddress,
-    });
+    const { accessToken, refreshToken } =
+      await this.createSession.execute({
+        userId: request.userId,
+        deviceName: userAgent,
+        userAgent,
+        ipAddress,
+      });
 
     return {
       authenticated: true,
@@ -280,9 +294,7 @@ export class IdentityController {
 
     await this.ssoStateStore.save(state);
 
-    return provider.createAuthorizationUrl(
-      state,
-    );
+    return provider.createAuthorizationUrl(state);
   }
 
   @Get('sso/:provider/callback')
@@ -343,15 +355,13 @@ export class IdentityController {
     const ipAddress =
       request.ip ?? 'unknown';
 
-    const {
-      accessToken,
-      refreshToken,
-    } = await this.createSession.execute({
-      userId: authentication.userId,
-      deviceName: userAgent,
-      userAgent,
-      ipAddress,
-    });
+    const { accessToken, refreshToken } =
+      await this.createSession.execute({
+        userId: authentication.userId,
+        deviceName: userAgent,
+        userAgent,
+        ipAddress,
+      });
 
     return {
       authenticated: true,
