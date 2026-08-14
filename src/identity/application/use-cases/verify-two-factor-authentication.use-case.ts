@@ -4,6 +4,10 @@ import { TWO_FACTOR_AUTHENTICATION_REPOSITORY } from '../../domain/repositories/
 
 import type { TwoFactorAuthenticationRepository } from '../../domain/repositories/two-factor-authentication.repository';
 
+import {
+  TWO_FACTOR_AUTHENTICATOR,
+} from '../../domain/services/two-factor-authenticator';
+
 import type { TwoFactorAuthenticator } from '../../domain/services/two-factor-authenticator';
 
 export interface VerifyTwoFactorAuthenticationInput {
@@ -16,6 +20,7 @@ export class VerifyTwoFactorAuthenticationUseCase {
     @Inject(TWO_FACTOR_AUTHENTICATION_REPOSITORY)
     private readonly repository: TwoFactorAuthenticationRepository,
 
+    @Inject(TWO_FACTOR_AUTHENTICATOR)
     private readonly authenticator: TwoFactorAuthenticator,
   ) {}
 
@@ -30,6 +35,9 @@ export class VerifyTwoFactorAuthenticationUseCase {
       return false;
     }
 
-    return this.authenticator.verifyCode(twoFactor.getSecret(), input.code);
+    return this.authenticator.verifyCode(
+      twoFactor.getSecret(),
+      input.code,
+    );
   }
 }

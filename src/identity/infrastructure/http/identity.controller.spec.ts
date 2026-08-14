@@ -150,10 +150,18 @@ describe('IdentityController', () => {
       createSsoStateStore(),
     );
 
-    const result = await controller.authenticate({
-      userId: 'user-id',
-      password: 'plain-password',
-    });
+    const result = await controller.authenticate(
+      {
+        userId: 'user-id',
+        password: 'plain-password',
+      },
+      {
+        headers: {
+          'user-agent': 'Mozilla/5.0',
+        },
+        ip: '192.168.0.10',
+      },
+    );
 
     expect(authenticateUser.execute).toHaveBeenCalledWith({
       userId: 'user-id',
@@ -162,9 +170,18 @@ describe('IdentityController', () => {
 
     expect(verifyTwoFactorAuthentication.execute).not.toHaveBeenCalled();
 
+    expect(createSession.execute).toHaveBeenCalledWith({
+      userId: 'user-id',
+      deviceName: 'Mozilla/5.0',
+      userAgent: 'Mozilla/5.0',
+      ipAddress: '192.168.0.10',
+    });
+
     expect(result).toEqual({
       authenticated: true,
       requiresTwoFactor: false,
+      accessToken: 'access-token',
+      refreshToken: 'refresh-token',
     });
   });
 
@@ -198,10 +215,18 @@ describe('IdentityController', () => {
       createSsoStateStore(),
     );
 
-    const result = await controller.authenticate({
-      userId: 'user-id',
-      password: 'plain-password',
-    });
+    const result = await controller.authenticate(
+      {
+        userId: 'user-id',
+        password: 'plain-password',
+      },
+      {
+        headers: {
+          'user-agent': 'Mozilla/5.0',
+        },
+        ip: '192.168.0.10',
+      },
+    );
 
     expect(result).toEqual({
       authenticated: false,
@@ -347,10 +372,18 @@ describe('IdentityController', () => {
     );
 
     await expect(
-      controller.authenticate({
-        userId: 'user-id',
-        password: 'wrong-password',
-      }),
+      controller.authenticate(
+        {
+          userId: 'user-id',
+          password: 'wrong-password',
+        },
+        {
+          headers: {
+            'user-agent': 'Mozilla/5.0',
+          },
+          ip: '192.168.0.10',
+        },
+      ),
     ).rejects.toThrow(
       new UnauthorizedException({
         authenticated: false,
