@@ -124,6 +124,8 @@ export class GoogleSsoProvider implements SsoProvider {
     return {
       providerUserId: userInfo.sub,
       email: userInfo.email,
+      emailVerified:
+        userInfo.email_verified ?? false,
       name:
         userInfo.name ??
         userInfo.email,

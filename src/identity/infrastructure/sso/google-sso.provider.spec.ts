@@ -134,6 +134,7 @@ describe('GoogleSsoProvider', () => {
       providerUserId: 'google-user-id',
       email:
         'caroline@example.com',
+      emailVerified: true,
       name: 'Caroline Barbosa',
       firstName: 'Caroline',
       lastName: 'Barbosa',

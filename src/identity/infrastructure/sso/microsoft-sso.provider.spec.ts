@@ -137,9 +137,9 @@ describe('MicrosoftSsoProvider', () => {
       );
 
     expect(result).toEqual({
-      providerUserId:
-        'microsoft-user-id',
+      providerUserId: 'microsoft-user-id',
       email: 'caroline@example.com',
+      emailVerified: false,
       name: 'Caroline Barbosa',
       firstName: 'Caroline',
       lastName: 'Barbosa',

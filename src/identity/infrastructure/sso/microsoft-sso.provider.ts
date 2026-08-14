@@ -55,6 +55,18 @@ export class MicrosoftSsoProvider
     code: string,
     state: string,
   ): Promise<SsoUserProfile> {
+    if (!code) {
+      throw new Error(
+        'Microsoft authorization code is required',
+      );
+    }
+
+    if (!state) {
+      throw new Error(
+        'Microsoft authorization state is required',
+      );
+    }
+
     const tokenResponse =
       await fetch(this.tokenEndpoint, {
         method: 'POST',
@@ -125,6 +137,7 @@ export class MicrosoftSsoProvider
     return {
       providerUserId: profile.id,
       email,
+      emailVerified: false,
       name:
         profile.displayName ??
         email,

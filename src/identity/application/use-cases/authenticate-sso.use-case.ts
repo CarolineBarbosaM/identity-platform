@@ -4,6 +4,14 @@ import { randomUUID } from 'crypto';
 import { ExternalIdentity } from '../../domain/entities/external-identity.entity';
 
 import {
+  USER_REPOSITORY,
+} from '../../domain/repositories/user.repository';
+
+import type {
+  UserRepository,
+} from '../../domain/repositories/user.repository';
+
+import {
   EXTERNAL_IDENTITY_REPOSITORY,
 } from '../../domain/repositories/external-identity.repository';
 
@@ -32,6 +40,9 @@ export class AuthenticateSsoUseCase {
   constructor(
     @Inject(EXTERNAL_IDENTITY_REPOSITORY)
     private readonly externalIdentityRepository: ExternalIdentityRepository,
+
+    @Inject(USER_REPOSITORY)
+    private readonly userRepository: UserRepository,
   ) {}
 
   async execute(
@@ -61,6 +72,19 @@ export class AuthenticateSsoUseCase {
       };
     }
 
+    const existingUser =
+      await this.userRepository.findByEmail(
+        profile.email,
+      );
+
+    if (existingUser) {
+      return this.createIdentity(
+        provider,
+        profile,
+        existingUser.getId(),
+      );
+    }
+
     return this.createIdentity(
       provider,
       profile,
@@ -70,13 +94,15 @@ export class AuthenticateSsoUseCase {
   private async createIdentity(
     provider: string,
     profile: SsoUserProfile,
+    userId?: string,
   ): Promise<AuthenticateSsoOutput> {
-    const userId = randomUUID();
+    const identityUserId =
+      userId ?? randomUUID();
 
     const externalIdentity =
       ExternalIdentity.create({
         id: randomUUID(),
-        userId,
+        userId: identityUserId,
         provider,
         providerUserId:
           profile.providerUserId,
@@ -88,7 +114,7 @@ export class AuthenticateSsoUseCase {
     );
 
     return {
-      userId,
+      userId: identityUserId,
       provider,
       isNewIdentity: true,
     };

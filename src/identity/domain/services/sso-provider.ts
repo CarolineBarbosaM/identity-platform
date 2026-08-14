@@ -5,6 +5,7 @@ export interface SsoUserProfile {
   firstName?: string;
   lastName?: string;
   pictureUrl?: string;
+  emailVerified: boolean;
 }
 
 export interface SsoAuthorization {
