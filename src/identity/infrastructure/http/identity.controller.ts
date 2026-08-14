@@ -9,6 +9,8 @@ import {
   UseGuards,
 } from '@nestjs/common';
 
+import { randomUUID } from 'crypto';
+
 import { AuthenticateUser } from '../../application/use-cases/authenticate-user.use-case';
 import { CreateUserUseCase } from '../../application/use-cases/create-user.use-case';
 import { CreateSessionUseCase } from '../../application/use-cases/create-session.use-case';
@@ -17,6 +19,11 @@ import { LogoutSessionUseCase } from '../../application/use-cases/logout-session
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
 import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
+
+import { SsoProviderRegistry } from '../../application/services/sso-provider-registry';
+import { AuthenticateSsoUseCase } from '../../application/use-cases/authenticate-sso.use-case';
+
+import type { SsoStateStore } from '../../domain/services/sso-state-store';
 
 import { AuthGuard } from './auth.guard';
 
@@ -65,6 +72,9 @@ export class IdentityController {
     private readonly resetPasswordUseCase: ResetPasswordUseCase,
     private readonly verifyEmail: VerifyEmailUseCase,
     private readonly verifyTwoFactorAuthentication: VerifyTwoFactorAuthenticationUseCase,
+    private readonly ssoProviderRegistry: SsoProviderRegistry,
+    private readonly authenticateSso: AuthenticateSsoUseCase,
+    private readonly ssoStateStore: SsoStateStore,
   ) {}
 
   @Post('register')
@@ -247,5 +257,106 @@ export class IdentityController {
       userId: request.userId,
       token: request.token,
     });
+  }
+
+  @Get('sso/:provider')
+  async ssoAuthorization(
+    @Req()
+    request: {
+      params: {
+        provider: string;
+      };
+    },
+  ): Promise<{
+    authorizationUrl: string;
+    state: string;
+  }> {
+    const provider =
+      this.ssoProviderRegistry.get(
+        request.params.provider,
+      );
+
+    const state = randomUUID();
+
+    await this.ssoStateStore.save(state);
+
+    return provider.createAuthorizationUrl(
+      state,
+    );
+  }
+
+  @Get('sso/:provider/callback')
+  @HttpCode(200)
+  async ssoCallback(
+    @Req()
+    request: {
+      params: {
+        provider: string;
+      };
+      query: {
+        code?: string;
+        state?: string;
+      };
+      headers: {
+        'user-agent'?: string;
+      };
+      ip?: string;
+    },
+  ): Promise<{
+    authenticated: boolean;
+    accessToken: string;
+    refreshToken: string;
+  }> {
+    const code = request.query.code;
+    const state = request.query.state;
+
+    if (!code || !state) {
+      throw new UnauthorizedException({
+        authenticated: false,
+      });
+    }
+
+    const validState =
+      await this.ssoStateStore.consume(state);
+
+    if (!validState) {
+      throw new UnauthorizedException({
+        authenticated: false,
+      });
+    }
+
+    const provider =
+      this.ssoProviderRegistry.get(
+        request.params.provider,
+      );
+
+    const authentication =
+      await this.authenticateSso.execute({
+        provider,
+        code,
+        state,
+      });
+
+    const userAgent =
+      request.headers['user-agent'] ?? 'unknown';
+
+    const ipAddress =
+      request.ip ?? 'unknown';
+
+    const {
+      accessToken,
+      refreshToken,
+    } = await this.createSession.execute({
+      userId: authentication.userId,
+      deviceName: userAgent,
+      userAgent,
+      ipAddress,
+    });
+
+    return {
+      authenticated: true,
+      accessToken,
+      refreshToken,
+    };
   }
 }

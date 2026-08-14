@@ -7,6 +7,11 @@ import { RefreshSessionUseCase } from '../../application/use-cases/refresh-sessi
 import { LogoutSessionUseCase } from '../../application/use-cases/logout-session.use-case';
 import { ResetPasswordUseCase } from '../../application/use-cases/reset-password.use-case';
 import { VerifyEmailUseCase } from '../../application/use-cases/verify-email.use-case';
+import { VerifyTwoFactorAuthenticationUseCase } from '../../application/use-cases/verify-two-factor-authentication.use-case';
+import { SsoProviderRegistry } from '../../application/services/sso-provider-registry';
+import { AuthenticateSsoUseCase } from '../../application/use-cases/authenticate-sso.use-case';
+import { SsoStateStore } from '../../../identity/domain/services/sso-state-store'; 
+
 
 describe('IdentityController - email verification', () => {
   it('should verify the user email', async () => {
@@ -42,6 +47,10 @@ describe('IdentityController - email verification', () => {
       logoutSession,
       resetPassword,
       verifyEmail,
+      {} as VerifyTwoFactorAuthenticationUseCase,
+      {} as SsoProviderRegistry,
+      {} as AuthenticateSsoUseCase,
+      {} as SsoStateStore,
     );
 
     await controller.verifyEmailAddress({
@@ -94,6 +103,10 @@ describe('IdentityController - email verification', () => {
       logoutSession,
       resetPassword,
       verifyEmail,
+      {} as VerifyTwoFactorAuthenticationUseCase,
+      {} as SsoProviderRegistry,
+      {} as AuthenticateSsoUseCase,
+      {} as SsoStateStore,
     );
 
     await expect(
