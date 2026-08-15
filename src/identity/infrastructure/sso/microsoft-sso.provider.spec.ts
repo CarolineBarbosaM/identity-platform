@@ -62,7 +62,12 @@ describe('MicrosoftSsoProvider', () => {
       .spyOn(global, 'fetch')
       .mockImplementation(
         async (input: RequestInfo | URL, init?: RequestInit) => {
-          const url = input.toString();
+          const url =
+            typeof input === 'string'
+              ? input
+              : input instanceof URL
+                ? input.toString()
+                : input.url;
 
           if (url.includes('/oauth2/v2.0/token')) {
             expect(init?.method).toBe('POST');
@@ -146,7 +151,12 @@ describe('MicrosoftSsoProvider', () => {
     jest
       .spyOn(global, 'fetch')
       .mockImplementation(async (input: RequestInfo | URL) => {
-        const url = input.toString();
+        const url =
+          typeof input === 'string'
+            ? input
+            : input instanceof URL
+              ? input.toString()
+              : input.url;
 
         if (url.includes('/oauth2/v2.0/token')) {
           return new Response(

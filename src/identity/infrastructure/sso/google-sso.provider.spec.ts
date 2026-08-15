@@ -40,7 +40,12 @@ describe('GoogleSsoProvider', () => {
       .spyOn(global, 'fetch')
       .mockImplementation(
         async (input: RequestInfo | URL, init?: RequestInit) => {
-          const url = input.toString();
+          const url =
+            typeof input === 'string'
+              ? input
+              : input instanceof URL
+                ? input.toString()
+                : input.url;
 
           if (url === 'https://oauth2.googleapis.com/token') {
             expect(init?.method).toBe('POST');

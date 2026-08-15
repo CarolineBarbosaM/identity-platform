@@ -1,13 +1,23 @@
 import { RedisTokenBlacklist } from './redis-token-blacklist';
 
 describe('RedisTokenBlacklist', () => {
-  it('should add a token to the blacklist with the remaining TTL', async () => {
+  const createRedisMock = () => {
     const redis = {
-      set: jest.fn().mockResolvedValue('OK'),
+      set: jest.fn(),
       exists: jest.fn(),
     };
 
-    const blacklist = new RedisTokenBlacklist(redis as any);
+    return redis;
+  };
+
+  it('should add a token to the blacklist with the remaining TTL', async () => {
+    const redis = createRedisMock();
+
+    redis.set.mockResolvedValue('OK');
+
+    const blacklist = new RedisTokenBlacklist(
+      redis as unknown as ConstructorParameters<typeof RedisTokenBlacklist>[0],
+    );
 
     const expiresAt = new Date(Date.now() + 60_000);
 
@@ -22,12 +32,11 @@ describe('RedisTokenBlacklist', () => {
   });
 
   it('should not add an already expired token', async () => {
-    const redis = {
-      set: jest.fn(),
-      exists: jest.fn(),
-    };
+    const redis = createRedisMock();
 
-    const blacklist = new RedisTokenBlacklist(redis as any);
+    const blacklist = new RedisTokenBlacklist(
+      redis as unknown as ConstructorParameters<typeof RedisTokenBlacklist>[0],
+    );
 
     const expiresAt = new Date(Date.now() - 1_000);
 
@@ -37,12 +46,13 @@ describe('RedisTokenBlacklist', () => {
   });
 
   it('should return true when the token is blacklisted', async () => {
-    const redis = {
-      set: jest.fn(),
-      exists: jest.fn().mockResolvedValue(1),
-    };
+    const redis = createRedisMock();
 
-    const blacklist = new RedisTokenBlacklist(redis as any);
+    redis.exists.mockResolvedValue(1);
+
+    const blacklist = new RedisTokenBlacklist(
+      redis as unknown as ConstructorParameters<typeof RedisTokenBlacklist>[0],
+    );
 
     const result = await blacklist.has('token-id');
 
@@ -52,12 +62,13 @@ describe('RedisTokenBlacklist', () => {
   });
 
   it('should return false when the token is not blacklisted', async () => {
-    const redis = {
-      set: jest.fn(),
-      exists: jest.fn().mockResolvedValue(0),
-    };
+    const redis = createRedisMock();
 
-    const blacklist = new RedisTokenBlacklist(redis as any);
+    redis.exists.mockResolvedValue(0);
+
+    const blacklist = new RedisTokenBlacklist(
+      redis as unknown as ConstructorParameters<typeof RedisTokenBlacklist>[0],
+    );
 
     const result = await blacklist.has('token-id');
 

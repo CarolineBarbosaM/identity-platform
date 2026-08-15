@@ -7,7 +7,7 @@ config({
 import { INestApplication } from '@nestjs/common';
 import { Test } from '@nestjs/testing';
 import { DataSource } from 'typeorm';
-import request from 'supertest';
+import request, { type Response } from 'supertest';
 
 import { AppModule } from '../src/app.module';
 
@@ -27,6 +27,128 @@ import { FakeClock } from '../src/shared/domain/fake-clock';
 import { SsoProviderRegistry } from '../src/identity/application/services/sso-provider-registry';
 import { AuthenticateSsoUseCase } from '../src/identity/application/use-cases/authenticate-sso.use-case';
 
+type LoginSuccessResponse = {
+  authenticated: true;
+  requiresTwoFactor: false;
+  accessToken: string;
+  refreshToken: string;
+};
+
+type LoginFailureResponse = {
+  authenticated: false;
+};
+
+type LoginResponse = LoginSuccessResponse | LoginFailureResponse;
+
+type MeResponse = {
+  userId: string;
+  tokenId: string;
+  expiresAt: string;
+};
+
+type SsoAuthorizationResponse = {
+  authorizationUrl: string;
+  state: string;
+};
+
+type SsoAuthenticationResponse = {
+  authenticated: true;
+  accessToken: string;
+  refreshToken: string;
+};
+
+type ResponseBody = {
+  body: unknown;
+};
+
+const getBody = (response: Response): unknown => {
+  const result = response as unknown as ResponseBody;
+  return result.body;
+};
+
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  typeof value === 'object' && value !== null;
+
+const parseLoginResponse = (value: unknown): LoginResponse => {
+  if (!isRecord(value) || typeof value.authenticated !== 'boolean') {
+    throw new Error('Invalid login response');
+  }
+
+  if (!value.authenticated) {
+    return {
+      authenticated: false,
+    };
+  }
+
+  if (
+    value.requiresTwoFactor !== false ||
+    typeof value.accessToken !== 'string' ||
+    typeof value.refreshToken !== 'string'
+  ) {
+    throw new Error('Invalid authenticated login response');
+  }
+
+  return {
+    authenticated: true,
+    requiresTwoFactor: false,
+    accessToken: value.accessToken,
+    refreshToken: value.refreshToken,
+  };
+};
+
+const parseMeResponse = (value: unknown): MeResponse => {
+  if (
+    !isRecord(value) ||
+    typeof value.userId !== 'string' ||
+    typeof value.tokenId !== 'string' ||
+    typeof value.expiresAt !== 'string'
+  ) {
+    throw new Error('Invalid /auth/me response');
+  }
+
+  return {
+    userId: value.userId,
+    tokenId: value.tokenId,
+    expiresAt: value.expiresAt,
+  };
+};
+
+const parseSsoAuthorizationResponse = (
+  value: unknown,
+): SsoAuthorizationResponse => {
+  if (
+    !isRecord(value) ||
+    typeof value.authorizationUrl !== 'string' ||
+    typeof value.state !== 'string'
+  ) {
+    throw new Error('Invalid SSO authorization response');
+  }
+
+  return {
+    authorizationUrl: value.authorizationUrl,
+    state: value.state,
+  };
+};
+
+const parseSsoAuthenticationResponse = (
+  value: unknown,
+): SsoAuthenticationResponse => {
+  if (
+    !isRecord(value) ||
+    value.authenticated !== true ||
+    typeof value.accessToken !== 'string' ||
+    typeof value.refreshToken !== 'string'
+  ) {
+    throw new Error('Invalid SSO authentication response');
+  }
+
+  return {
+    authenticated: true,
+    accessToken: value.accessToken,
+    refreshToken: value.refreshToken,
+  };
+};
+
 describe('Identity (e2e)', () => {
   let app: INestApplication;
   let dataSource: DataSource;
@@ -38,8 +160,9 @@ describe('Identity (e2e)', () => {
       .overrideProvider(SsoProviderRegistry)
       .useValue({
         get: jest.fn().mockReturnValue({
-          createAuthorizationUrl: jest.fn().mockImplementation(
-            async (state: string) => ({
+          createAuthorizationUrl: jest
+            .fn()
+            .mockImplementation(async (state: string) => ({
               authorizationUrl:
                 `https://accounts.google.com/o/oauth2/v2/auth?` +
                 `client_id=test-client-id&` +
@@ -48,8 +171,7 @@ describe('Identity (e2e)', () => {
                 `scope=openid%20email%20profile&` +
                 `state=${state}`,
               state,
-            }),
-          ),
+            })),
         }),
       })
       .overrideProvider(AuthenticateSsoUseCase)
@@ -89,9 +211,7 @@ describe('Identity (e2e)', () => {
   });
 
   afterAll(async () => {
-    if (app) {
-      await app.close();
-    }
+    await app.close();
   });
 
   it('POST /auth/login should authenticate a user', async () => {
@@ -104,7 +224,9 @@ describe('Identity (e2e)', () => {
 
     expect(response.status).toBe(200);
 
-    expect(response.body).toEqual({
+    const body = parseLoginResponse(getBody(response));
+
+    expect(body).toEqual({
       authenticated: true,
       requiresTwoFactor: false,
       accessToken: expect.any(String),
@@ -122,7 +244,9 @@ describe('Identity (e2e)', () => {
 
     expect(response.status).toBe(401);
 
-    expect(response.body).toEqual({
+    const body = parseLoginResponse(getBody(response));
+
+    expect(body).toEqual({
       authenticated: false,
     });
   });
@@ -137,12 +261,13 @@ describe('Identity (e2e)', () => {
 
     expect(loginResponse.status).toBe(200);
 
-    const accessToken = loginResponse.body.accessToken;
-    const refreshToken = loginResponse.body.refreshToken;
+    const loginBody = parseLoginResponse(getBody(loginResponse));
 
-    expect(accessToken).toEqual(expect.any(String));
-    expect(refreshToken).toEqual(expect.any(String));
+    if (!loginBody.authenticated) {
+      throw new Error('Expected login to be authenticated');
+    }
 
+    const { accessToken, refreshToken } = loginBody;
     const sessionId = refreshToken.split('.')[0];
 
     expect(sessionId).toEqual(expect.any(String));
@@ -175,17 +300,21 @@ describe('Identity (e2e)', () => {
 
     expect(loginResponse.status).toBe(200);
 
-    const accessToken = loginResponse.body.accessToken;
+    const loginBody = parseLoginResponse(getBody(loginResponse));
 
-    expect(accessToken).toEqual(expect.any(String));
+    if (!loginBody.authenticated) {
+      throw new Error('Expected login to be authenticated');
+    }
 
     const response = await request(app.getHttpServer())
       .get('/auth/me')
-      .set('Authorization', `Bearer ${accessToken}`);
+      .set('Authorization', `Bearer ${loginBody.accessToken}`);
 
     expect(response.status).toBe(200);
 
-    expect(response.body).toEqual({
+    const body = parseMeResponse(getBody(response));
+
+    expect(body).toEqual({
       userId: '22222222-2222-2222-2222-222222222222',
       tokenId: expect.any(String),
       expiresAt: expect.any(String),
@@ -202,11 +331,13 @@ describe('Identity (e2e)', () => {
     const fetchMock = jest
       .spyOn(global, 'fetch')
       .mockImplementation(
-        async (
-          input: RequestInfo | URL,
-          init?: RequestInit,
-        ) => {
-          const url = input.toString();
+        async (input: RequestInfo | URL, init?: RequestInit) => {
+          const url =
+            typeof input === 'string'
+              ? input
+              : input instanceof URL
+                ? input.href
+                : input.url;
 
           if (url === 'https://oauth2.googleapis.com/token') {
             expect(init?.method).toBe('POST');
@@ -224,10 +355,7 @@ describe('Identity (e2e)', () => {
             );
           }
 
-          if (
-            url ===
-            'https://openidconnect.googleapis.com/v1/userinfo'
-          ) {
+          if (url === 'https://openidconnect.googleapis.com/v1/userinfo') {
             expect(init?.method).toBe('GET');
 
             expect(init?.headers).toEqual({
@@ -258,36 +386,36 @@ describe('Identity (e2e)', () => {
       );
 
     try {
-      const authorizationResponse = await request(
-        app.getHttpServer(),
-      ).get('/auth/sso/google');
+      const authorizationResponse = await request(app.getHttpServer()).get(
+        '/auth/sso/google',
+      );
 
       expect(authorizationResponse.status).toBe(200);
 
-      expect(
-        authorizationResponse.body.authorizationUrl,
-      ).toContain(
+      const authorizationBody = parseSsoAuthorizationResponse(
+        getBody(authorizationResponse),
+      );
+
+      expect(authorizationBody.authorizationUrl).toContain(
         'https://accounts.google.com/o/oauth2/v2/auth',
       );
 
-      expect(authorizationResponse.body.state).toEqual(
-        expect.any(String),
-      );
+      expect(authorizationBody.state).toEqual(expect.any(String));
 
-      const state = authorizationResponse.body.state;
-
-      const callbackResponse = await request(
-        app.getHttpServer(),
-      )
+      const callbackResponse = await request(app.getHttpServer())
         .get('/auth/sso/google/callback')
         .query({
           code: 'google-authorization-code',
-          state,
+          state: authorizationBody.state,
         });
 
       expect(callbackResponse.status).toBe(200);
 
-      expect(callbackResponse.body).toEqual({
+      const callbackBody = parseSsoAuthenticationResponse(
+        getBody(callbackResponse),
+      );
+
+      expect(callbackBody).toEqual({
         authenticated: true,
         accessToken: expect.any(String),
         refreshToken: expect.any(String),

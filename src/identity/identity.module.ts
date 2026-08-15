@@ -60,15 +60,11 @@ import { DatabaseModule } from '../database/database.module';
 import { CLOCK } from '../shared/domain/clock';
 import { SystemClock } from '../shared/infrastructure/system-clock';
 
-import {
-  TWO_FACTOR_AUTHENTICATOR,
-} from './domain/services/two-factor-authenticator';
+import { TWO_FACTOR_AUTHENTICATOR } from './domain/services/two-factor-authenticator';
 
 import { OtplibTwoFactorAuthenticator } from './infrastructure/security/otplib-two-factor-authenticator';
 
-import {
-  SSO_STATE_STORE,
-} from './domain/services/sso-state-store';
+import { SSO_STATE_STORE } from './domain/services/sso-state-store';
 
 import { DEVICE_REPOSITORY } from './domain/repositories/device.repository';
 import { USER_REPOSITORY } from './domain/repositories/user.repository';
@@ -102,9 +98,7 @@ import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
     ]),
   ],
 
-  controllers: [
-    IdentityController,
-  ],
+  controllers: [IdentityController],
 
   providers: [
     AuthenticateUser,
@@ -131,14 +125,8 @@ import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
       useFactory: (
         googleSsoProvider: GoogleSsoProvider,
         microsoftSsoProvider: MicrosoftSsoProvider,
-      ) => [
-        googleSsoProvider,
-        microsoftSsoProvider,
-      ],
-      inject: [
-        GoogleSsoProvider,
-        MicrosoftSsoProvider,
-      ],
+      ) => [googleSsoProvider, microsoftSsoProvider],
+      inject: [GoogleSsoProvider, MicrosoftSsoProvider],
     },
 
     AuthGuard,
@@ -215,16 +203,12 @@ import { ACCESS_TOKEN_VERIFIER } from './domain/services/access-token-verifier';
 
     {
       provide: ACCESS_TOKEN_GENERATOR,
-      useFactory: () => new JwtAccessTokenGenerator(
-        'development-secret',
-      ),
+      useFactory: () => new JwtAccessTokenGenerator('development-secret'),
     },
 
     {
       provide: ACCESS_TOKEN_VERIFIER,
-      useFactory: () => new JwtAccessTokenVerifier(
-        'development-secret',
-      ),
+      useFactory: () => new JwtAccessTokenVerifier('development-secret'),
     },
 
     {
