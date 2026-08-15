@@ -1,14 +1,25 @@
-jest.mock('otplib', () => {
-  const generateSecret = jest.fn();
-  const verify = jest.fn();
+type VerifyInput = {
+  secret: string;
+  token: string;
+};
 
-  return {
-    OTP: jest.fn().mockImplementation(() => ({
-      generateSecret,
-      verify,
-    })),
-  };
-});
+type VerifyResult = {
+  valid: boolean;
+};
+
+type OtpInstance = {
+  generateSecret: () => Promise<string>;
+  verify: (input: VerifyInput) => Promise<VerifyResult>;
+};
+
+const mockOTP = jest.fn<OtpInstance, []>(() => ({
+  generateSecret: jest.fn<Promise<string>, []>(),
+  verify: jest.fn<Promise<VerifyResult>, [VerifyInput]>(),
+}));
+
+jest.mock('otplib', () => ({
+  OTP: mockOTP,
+}));
 
 jest.mock('@otplib/plugin-crypto-node', () => ({
   crypto: {},
@@ -21,33 +32,18 @@ jest.mock('@otplib/plugin-base32-scure', () => ({
 import { OtplibTwoFactorAuthenticator } from './otplib-two-factor-authenticator';
 
 describe('OtplibTwoFactorAuthenticator', () => {
-  let generateSecret: jest.Mock;
-  let verify: jest.Mock;
-
   beforeEach(() => {
-    const { OTP } = jest.requireMock('otplib');
-
-    const otpInstance = OTP.mock.results[0]?.value;
-
-    if (otpInstance) {
-      generateSecret = otpInstance.generateSecret;
-
-      verify = otpInstance.verify;
-    }
-
     jest.clearAllMocks();
   });
 
   it('should generate a secret', async () => {
-    const { OTP } = jest.requireMock('otplib');
-
     const mockedGenerateSecret = jest
-      .fn()
+      .fn<Promise<string>, []>()
       .mockResolvedValue('generated-secret');
 
-    OTP.mockImplementation(() => ({
+    mockOTP.mockImplementation(() => ({
       generateSecret: mockedGenerateSecret,
-      verify: jest.fn(),
+      verify: jest.fn<Promise<VerifyResult>, [VerifyInput]>(),
     }));
 
     const authenticator = new OtplibTwoFactorAuthenticator();
@@ -55,19 +51,18 @@ describe('OtplibTwoFactorAuthenticator', () => {
     const result = await authenticator.generateSecret();
 
     expect(result).toBe('generated-secret');
-
     expect(mockedGenerateSecret).toHaveBeenCalledTimes(1);
   });
 
   it('should return true when the code is valid', async () => {
-    const { OTP } = jest.requireMock('otplib');
+    const mockedVerify = jest
+      .fn<Promise<VerifyResult>, [VerifyInput]>()
+      .mockResolvedValue({
+        valid: true,
+      });
 
-    const mockedVerify = jest.fn().mockResolvedValue({
-      valid: true,
-    });
-
-    OTP.mockImplementation(() => ({
-      generateSecret: jest.fn(),
+    mockOTP.mockImplementation(() => ({
+      generateSecret: jest.fn<Promise<string>, []>(),
       verify: mockedVerify,
     }));
 
@@ -84,14 +79,14 @@ describe('OtplibTwoFactorAuthenticator', () => {
   });
 
   it('should return false when the code is invalid', async () => {
-    const { OTP } = jest.requireMock('otplib');
+    const mockedVerify = jest
+      .fn<Promise<VerifyResult>, [VerifyInput]>()
+      .mockResolvedValue({
+        valid: false,
+      });
 
-    const mockedVerify = jest.fn().mockResolvedValue({
-      valid: false,
-    });
-
-    OTP.mockImplementation(() => ({
-      generateSecret: jest.fn(),
+    mockOTP.mockImplementation(() => ({
+      generateSecret: jest.fn<Promise<string>, []>(),
       verify: mockedVerify,
     }));
 

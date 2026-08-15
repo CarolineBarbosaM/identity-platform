@@ -1,5 +1,3 @@
-import { Clock } from '../../../shared/domain/clock';
-
 export interface CreateSessionProps {
   id: string;
   userId: string;
@@ -16,6 +14,8 @@ export interface RehydrateSessionProps {
   createdAt: Date;
   updatedAt: Date;
 }
+
+import type { Clock } from '../../../shared/domain/clock';
 
 export class Session {
   private constructor(
@@ -82,7 +82,7 @@ export class Session {
     this.updatedAt = now;
   }
 
-  static rehydrate(props: RehydrateSessionProps, clock: Clock): Session {
+  static rehydrate(props: RehydrateSessionProps): Session {
     return new Session(
       props.id,
       props.userId,

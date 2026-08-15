@@ -3,11 +3,23 @@ import { PostgresExternalIdentityRepository } from './postgres-external-identity
 import { ExternalIdentity } from '../../../domain/entities/external-identity.entity';
 
 describe('PostgresExternalIdentityRepository', () => {
+  type Repository = ConstructorParameters<
+    typeof PostgresExternalIdentityRepository
+  >[0];
+
+  type StoredEntity = {
+    id: string;
+    userId: string;
+    provider: string;
+    providerUserId: string;
+    email: string;
+  };
+
   const createRepository = () => {
-    const storedEntities: any[] = [];
+    const storedEntities: StoredEntity[] = [];
 
     const repository = {
-      save: jest.fn(async (entity) => {
+      save: jest.fn(async (entity: StoredEntity) => {
         const index = storedEntities.findIndex((item) => item.id === entity.id);
 
         if (index >= 0) {
@@ -19,22 +31,39 @@ describe('PostgresExternalIdentityRepository', () => {
         return entity;
       }),
 
-      findOne: jest.fn(async ({ where }) => {
-        return (
-          storedEntities.find(
-            (entity) =>
-              entity.provider === where.provider &&
-              entity.providerUserId === where.providerUserId,
-          ) ?? null
-        );
-      }),
+      findOne: jest.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            provider: string;
+            providerUserId: string;
+          };
+        }) => {
+          return (
+            storedEntities.find(
+              (entity) =>
+                entity.provider === where.provider &&
+                entity.providerUserId === where.providerUserId,
+            ) ?? null
+          );
+        },
+      ),
 
-      find: jest.fn(async ({ where }) => {
-        return storedEntities.filter(
-          (entity) => entity.userId === where.userId,
-        );
-      }),
-    } as any;
+      find: jest.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            userId: string;
+          };
+        }) => {
+          return storedEntities.filter(
+            (entity) => entity.userId === where.userId,
+          );
+        },
+      ),
+    } as unknown as Repository;
 
     return {
       repository,
@@ -115,9 +144,7 @@ describe('PostgresExternalIdentityRepository', () => {
     });
 
     await postgresRepository.save(googleIdentity);
-
     await postgresRepository.save(microsoftIdentity);
-
     await postgresRepository.save(otherUserIdentity);
 
     const result = await postgresRepository.findByUserId('user-id');

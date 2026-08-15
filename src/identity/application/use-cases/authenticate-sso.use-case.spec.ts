@@ -71,10 +71,14 @@ describe('AuthenticateSsoUseCase', () => {
   });
 
   it('should create a new external identity when it does not exist', async () => {
+    const saveMock = jest
+      .fn<Promise<void>, [ExternalIdentity]>()
+      .mockResolvedValue(undefined);
+
     const repository = {
       findByProviderAndProviderUserId: jest.fn().mockResolvedValue(null),
       findByUserId: jest.fn(),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: saveMock,
     } as unknown as ExternalIdentityRepository;
 
     const userRepository = {
@@ -106,17 +110,13 @@ describe('AuthenticateSsoUseCase', () => {
       'caroline@example.com',
     );
 
-    expect(repository.save).toHaveBeenCalledTimes(1);
+    expect(saveMock).toHaveBeenCalledTimes(1);
 
-    const savedIdentity = (repository.save as jest.Mock).mock
-      .calls[0][0] as ExternalIdentity;
+    const savedIdentity = saveMock.mock.calls[0][0];
 
     expect(savedIdentity.getProvider()).toBe('google');
-
     expect(savedIdentity.getProviderUserId()).toBe('google-user-id');
-
     expect(savedIdentity.getEmail()).toBe('caroline@example.com');
-
     expect(savedIdentity.getUserId()).toBe(result.userId);
 
     expect(result).toEqual({
@@ -127,10 +127,14 @@ describe('AuthenticateSsoUseCase', () => {
   });
 
   it('should link a new external identity to an existing user by email', async () => {
+    const saveMock = jest
+      .fn<Promise<void>, [ExternalIdentity]>()
+      .mockResolvedValue(undefined);
+
     const repository = {
       findByProviderAndProviderUserId: jest.fn().mockResolvedValue(null),
       findByUserId: jest.fn(),
-      save: jest.fn().mockResolvedValue(undefined),
+      save: saveMock,
     } as unknown as ExternalIdentityRepository;
 
     const existingUser = {
@@ -166,10 +170,9 @@ describe('AuthenticateSsoUseCase', () => {
       'caroline@example.com',
     );
 
-    expect(repository.save).toHaveBeenCalledTimes(1);
+    expect(saveMock).toHaveBeenCalledTimes(1);
 
-    const savedIdentity = (repository.save as jest.Mock).mock
-      .calls[0][0] as ExternalIdentity;
+    const savedIdentity = saveMock.mock.calls[0][0];
 
     expect(savedIdentity.getUserId()).toBe('existing-user-id');
 
@@ -215,9 +218,7 @@ describe('AuthenticateSsoUseCase', () => {
     ).rejects.toThrow('SSO email must be verified');
 
     expect(repository.findByProviderAndProviderUserId).not.toHaveBeenCalled();
-
     expect(userRepository.findByEmail).not.toHaveBeenCalled();
-
     expect(repository.save).not.toHaveBeenCalled();
   });
 });

@@ -135,13 +135,12 @@ export class IdentityController {
 
     const ipAddress = httpRequest.ip ?? 'unknown';
 
-    const { accessToken, refreshToken } =
-      await this.createSession.execute({
-        userId: request.userId,
-        deviceName: userAgent,
-        userAgent,
-        ipAddress,
-      });
+    const { accessToken, refreshToken } = await this.createSession.execute({
+      userId: request.userId,
+      deviceName: userAgent,
+      userAgent,
+      ipAddress,
+    });
 
     return {
       authenticated: true,
@@ -161,11 +160,10 @@ export class IdentityController {
     accessToken: string;
     refreshToken: string;
   }> {
-    const validTwoFactor =
-      await this.verifyTwoFactorAuthentication.execute({
-        userId: request.userId,
-        code: request.code,
-      });
+    const validTwoFactor = await this.verifyTwoFactorAuthentication.execute({
+      userId: request.userId,
+      code: request.code,
+    });
 
     if (!validTwoFactor) {
       throw new UnauthorizedException({
@@ -173,19 +171,16 @@ export class IdentityController {
       });
     }
 
-    const userAgent =
-      httpRequest.headers['user-agent'] ?? 'unknown';
+    const userAgent = httpRequest.headers['user-agent'] ?? 'unknown';
 
-    const ipAddress =
-      httpRequest.ip ?? 'unknown';
+    const ipAddress = httpRequest.ip ?? 'unknown';
 
-    const { accessToken, refreshToken } =
-      await this.createSession.execute({
-        userId: request.userId,
-        deviceName: userAgent,
-        userAgent,
-        ipAddress,
-      });
+    const { accessToken, refreshToken } = await this.createSession.execute({
+      userId: request.userId,
+      deviceName: userAgent,
+      userAgent,
+      ipAddress,
+    });
 
     return {
       authenticated: true,
@@ -252,9 +247,7 @@ export class IdentityController {
 
   @Post('password/reset')
   @HttpCode(204)
-  async resetPassword(
-    @Body() request: ResetPasswordRequest,
-  ): Promise<void> {
+  async resetPassword(@Body() request: ResetPasswordRequest): Promise<void> {
     await this.resetPasswordUseCase.execute({
       userId: request.userId,
       token: request.token,
@@ -264,9 +257,7 @@ export class IdentityController {
 
   @Post('email/verify')
   @HttpCode(204)
-  async verifyEmailAddress(
-    @Body() request: VerifyEmailRequest,
-  ): Promise<void> {
+  async verifyEmailAddress(@Body() request: VerifyEmailRequest): Promise<void> {
     await this.verifyEmail.execute({
       userId: request.userId,
       token: request.token,
@@ -285,10 +276,7 @@ export class IdentityController {
     authorizationUrl: string;
     state: string;
   }> {
-    const provider =
-      this.ssoProviderRegistry.get(
-        request.params.provider,
-      );
+    const provider = this.ssoProviderRegistry.get(request.params.provider);
 
     const state = randomUUID();
 
@@ -328,8 +316,7 @@ export class IdentityController {
       });
     }
 
-    const validState =
-      await this.ssoStateStore.consume(state);
+    const validState = await this.ssoStateStore.consume(state);
 
     if (!validState) {
       throw new UnauthorizedException({
@@ -337,31 +324,24 @@ export class IdentityController {
       });
     }
 
-    const provider =
-      this.ssoProviderRegistry.get(
-        request.params.provider,
-      );
+    const provider = this.ssoProviderRegistry.get(request.params.provider);
 
-    const authentication =
-      await this.authenticateSso.execute({
-        provider,
-        code,
-        state,
-      });
+    const authentication = await this.authenticateSso.execute({
+      provider,
+      code,
+      state,
+    });
 
-    const userAgent =
-      request.headers['user-agent'] ?? 'unknown';
+    const userAgent = request.headers['user-agent'] ?? 'unknown';
 
-    const ipAddress =
-      request.ip ?? 'unknown';
+    const ipAddress = request.ip ?? 'unknown';
 
-    const { accessToken, refreshToken } =
-      await this.createSession.execute({
-        userId: authentication.userId,
-        deviceName: userAgent,
-        userAgent,
-        ipAddress,
-      });
+    const { accessToken, refreshToken } = await this.createSession.execute({
+      userId: authentication.userId,
+      deviceName: userAgent,
+      userAgent,
+      ipAddress,
+    });
 
     return {
       authenticated: true,

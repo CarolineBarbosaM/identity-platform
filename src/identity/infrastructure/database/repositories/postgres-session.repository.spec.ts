@@ -2,6 +2,7 @@ import { PostgresSessionRepository } from './postgres-session.repository';
 import { SessionOrmEntity } from '../entities/session.orm-entity';
 import { Session } from '../../../domain/entities/session.entity';
 import type { Clock } from '../../../../shared/domain/clock';
+import type { Repository } from 'typeorm';
 
 describe('PostgresSessionRepository', () => {
   let repository: PostgresSessionRepository;
@@ -21,7 +22,10 @@ describe('PostgresSessionRepository', () => {
       now: jest.fn(() => new Date('2026-08-08T15:00:00.000Z')),
     };
 
-    repository = new PostgresSessionRepository(ormRepository as any, clock);
+    repository = new PostgresSessionRepository(
+      ormRepository as unknown as Repository<SessionOrmEntity>,
+      clock,
+    );
   });
 
   describe('findById', () => {

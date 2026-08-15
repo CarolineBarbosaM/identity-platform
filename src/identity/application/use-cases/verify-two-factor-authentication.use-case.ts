@@ -4,9 +4,7 @@ import { TWO_FACTOR_AUTHENTICATION_REPOSITORY } from '../../domain/repositories/
 
 import type { TwoFactorAuthenticationRepository } from '../../domain/repositories/two-factor-authentication.repository';
 
-import {
-  TWO_FACTOR_AUTHENTICATOR,
-} from '../../domain/services/two-factor-authenticator';
+import { TWO_FACTOR_AUTHENTICATOR } from '../../domain/services/two-factor-authenticator';
 
 import type { TwoFactorAuthenticator } from '../../domain/services/two-factor-authenticator';
 
@@ -35,9 +33,6 @@ export class VerifyTwoFactorAuthenticationUseCase {
       return false;
     }
 
-    return this.authenticator.verifyCode(
-      twoFactor.getSecret(),
-      input.code,
-    );
+    return this.authenticator.verifyCode(twoFactor.getSecret(), input.code);
   }
 }

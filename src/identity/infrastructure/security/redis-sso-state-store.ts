@@ -14,12 +14,7 @@ export class RedisSsoStateStore implements SsoStateStore {
   ) {}
 
   async save(state: string): Promise<void> {
-    await this.redis.set(
-      this.getKey(state),
-      '1',
-      'EX',
-      this.stateTtlInSeconds,
-    );
+    await this.redis.set(this.getKey(state), '1', 'EX', this.stateTtlInSeconds);
   }
 
   async consume(state: string): Promise<boolean> {

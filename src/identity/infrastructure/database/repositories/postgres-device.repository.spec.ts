@@ -1,13 +1,26 @@
 import { PostgresDeviceRepository } from './postgres-device.repository';
+import { DeviceOrmEntity } from '../entities/device.orm-entity';
 import { Device } from '../../../domain/entities/device.entity';
 import { FakeClock } from '../../../../shared/domain/fake-clock';
 
 describe('PostgresDeviceRepository', () => {
-  const createRepository = () => {
-    const storedEntities: any[] = [];
+  type RepositoryMock = {
+    save: jest.Mock<Promise<DeviceOrmEntity>, [DeviceOrmEntity]>;
+    findOne: jest.Mock<
+      Promise<DeviceOrmEntity | null>,
+      [{ where: { id: string } }]
+    >;
+    find: jest.Mock<
+      Promise<DeviceOrmEntity[]>,
+      [{ where: { userId: string } }]
+    >;
+  };
 
-    const repository = {
-      save: jest.fn(async (entity) => {
+  const createRepository = () => {
+    const storedEntities: DeviceOrmEntity[] = [];
+
+    const repository: RepositoryMock = {
+      save: jest.fn(async (entity: DeviceOrmEntity) => {
         const index = storedEntities.findIndex((item) => item.id === entity.id);
 
         if (index >= 0) {
@@ -19,23 +32,42 @@ describe('PostgresDeviceRepository', () => {
         return entity;
       }),
 
-      findOne: jest.fn(async ({ where }) => {
-        return storedEntities.find((entity) => entity.id === where.id) ?? null;
-      }),
+      findOne: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { id: string };
+        }): Promise<DeviceOrmEntity | null> => {
+          return (
+            storedEntities.find((entity) => entity.id === where.id) ?? null
+          );
+        },
+      ),
 
-      find: jest.fn(async ({ where }) => {
-        return storedEntities.filter(
-          (entity) => entity.userId === where.userId,
-        );
-      }),
-    } as any;
+      find: jest.fn(
+        async ({
+          where,
+        }: {
+          where: { userId: string };
+        }): Promise<DeviceOrmEntity[]> => {
+          return storedEntities.filter(
+            (entity) => entity.userId === where.userId,
+          );
+        },
+      ),
+    };
 
     const clock = new FakeClock(new Date('2026-08-10T10:00:00.000Z'));
+
+    const postgresRepository = new PostgresDeviceRepository(
+      repository as never,
+      clock,
+    );
 
     return {
       repository,
       clock,
-      postgresRepository: new PostgresDeviceRepository(repository, clock),
+      postgresRepository,
     };
   };
 

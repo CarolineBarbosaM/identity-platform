@@ -1,6 +1,12 @@
 import { JwtService } from '@nestjs/jwt';
 import { JwtAccessTokenGenerator } from './jwt-access-token-generator';
 
+interface AccessTokenPayload {
+  sub: string;
+  exp: number;
+  iat: number;
+}
+
 describe('JwtAccessTokenGenerator', () => {
   it('should generate an access token with user identity', async () => {
     const generator = new JwtAccessTokenGenerator('test-secret');
@@ -13,7 +19,7 @@ describe('JwtAccessTokenGenerator', () => {
       secret: 'test-secret',
     });
 
-    const payload = await jwtService.verifyAsync(token);
+    const payload = await jwtService.verifyAsync<AccessTokenPayload>(token);
 
     expect(payload.sub).toBe('user-id');
     expect(payload.exp - payload.iat).toBe(15 * 60);

@@ -3,11 +3,23 @@ import { User } from '../../../domain/entities/user.entity';
 import { FakeClock } from '../../../../shared/domain/fake-clock';
 
 describe('PostgresUserRepository', () => {
+  type Repository = ConstructorParameters<typeof PostgresUserRepository>[0];
+
+  type StoredEntity = {
+    id: string;
+    name: string;
+    email: string;
+    status: ReturnType<User['getStatus']>;
+    emailVerifiedAt: Date | null;
+    createdAt: Date;
+    updatedAt: Date;
+  };
+
   const createRepository = () => {
-    const storedEntities: any[] = [];
+    const storedEntities: StoredEntity[] = [];
 
     const repository = {
-      save: jest.fn(async (entity) => {
+      save: jest.fn(async (entity: StoredEntity) => {
         const index = storedEntities.findIndex((item) => item.id === entity.id);
 
         if (index >= 0) {
@@ -19,14 +31,24 @@ describe('PostgresUserRepository', () => {
         return entity;
       }),
 
-      findOne: jest.fn(async ({ where }) => {
-        return (
-          storedEntities.find(
-            (entity) => entity.id === where.id || entity.email === where.email,
-          ) ?? null
-        );
-      }),
-    } as any;
+      findOne: jest.fn(
+        async ({
+          where,
+        }: {
+          where: {
+            id?: string;
+            email?: string;
+          };
+        }) => {
+          return (
+            storedEntities.find(
+              (entity) =>
+                entity.id === where.id || entity.email === where.email,
+            ) ?? null
+          );
+        },
+      ),
+    } as unknown as Repository;
 
     const clock = new FakeClock(new Date('2026-08-12T10:00:00.000Z'));
 

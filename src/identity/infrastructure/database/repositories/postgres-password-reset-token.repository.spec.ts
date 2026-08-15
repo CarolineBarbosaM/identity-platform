@@ -5,6 +5,8 @@ import { PasswordResetTokenOrmEntity } from '../entities/password-reset-token.or
 
 import { Clock } from '../../../../shared/domain/clock';
 
+import type { Repository } from 'typeorm';
+
 describe('PostgresPasswordResetTokenRepository', () => {
   const createRepository = () => {
     const typeOrmRepository = {
@@ -17,7 +19,7 @@ describe('PostgresPasswordResetTokenRepository', () => {
     };
 
     const repository = new PostgresPasswordResetTokenRepository(
-      typeOrmRepository as any,
+      typeOrmRepository as unknown as Repository<PasswordResetTokenOrmEntity>,
       clock,
     );
 

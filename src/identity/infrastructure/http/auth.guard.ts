@@ -12,6 +12,17 @@ import type { AccessTokenVerifier } from '../../domain/services/access-token-ver
 import { TOKEN_BLACKLIST } from '../../domain/services/token-blacklist';
 import type { TokenBlacklist } from '../../domain/services/token-blacklist';
 
+interface AuthenticatedRequest {
+  headers: {
+    authorization?: string;
+  };
+  user: {
+    userId: string;
+    tokenId: string;
+    expiresAt: Date;
+  };
+}
+
 @Injectable()
 export class AuthGuard implements CanActivate {
   constructor(
@@ -23,7 +34,7 @@ export class AuthGuard implements CanActivate {
   ) {}
 
   async canActivate(context: ExecutionContext): Promise<boolean> {
-    const request = context.switchToHttp().getRequest();
+    const request = context.switchToHttp().getRequest<AuthenticatedRequest>();
 
     const authorization = request.headers.authorization;
 
