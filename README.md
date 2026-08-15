@@ -1,75 +1,85 @@
-# identity-platform
-A security-focused identity and authentication platform exploring session management, token revocation, 2FA and federated identity.
 # Identity Platform
 
-A security-focused identity and authentication platform designed to centralize identity management and authentication concerns for multiple applications.
+A security-focused identity and authentication platform built to explore the architecture and engineering challenges behind centralized identity management.
 
-The project explores how authentication can be treated as an independent platform rather than as a responsibility embedded inside each business application.
+The project is designed around a simple idea:
 
-## Why?
+> Authentication should be a platform concern, not something every application has to reinvent.
 
-Authentication is often implemented as part of each application.
+Instead of embedding authentication logic inside each business application, the Identity Platform provides a dedicated boundary for identity, authentication, sessions, tokens, two-factor authentication and federated identity.
 
-At first, this seems simple: a login endpoint, password validation, sessions and maybe an OAuth provider.
+## Why this project?
 
-As the number of applications grows, however, authentication concerns tend to become duplicated:
+Authentication starts simple.
 
-- User identity is managed in multiple places
-- Authentication rules are implemented differently across services
-- Session and token management become inconsistent
-- Security fixes need to be replicated across applications
-- Integrations with identity providers are tightly coupled to business applications
+A login endpoint, password validation and a token can be enough for a small application.
 
-The Identity Platform explores a different approach:
+As the system grows, however, authentication becomes responsible for much more:
 
-> **Authentication as a shared platform responsibility.**
+- Identity lifecycle
+- Session management
+- Token lifecycle and revocation
+- Two-factor authentication
+- External identity providers
+- Security-sensitive temporary state
+- Recovery and verification flows
 
-Applications delegate identity and authentication concerns to a dedicated service and focus on their own business domains.
+Keeping these concerns inside individual applications can lead to duplicated logic, inconsistent security decisions and tightly coupled authentication flows.
+
+The Identity Platform explores how these responsibilities can be organized into a dedicated service with clear module boundaries.
 
 ## Architecture
 
-The platform is designed around a clear separation between **identity**, **authentication**, **authorization** and **business applications**.
+The project currently follows a **modular monolith** architecture.
+
+The decision was intentional: the goal is to establish strong domain boundaries and independent responsibilities without introducing the operational complexity of microservices before it is actually necessary.
 
 ```text
-                    ┌──────────────────────┐
-                    │    Application A     │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │    Application B     │
-                    └──────────┬───────────┘
-                               │
-                    ┌──────────▼───────────┐
-                    │    Application C     │
-                    └──────────┬───────────┘
-                               │
-                               │ Authentication
-                               ▼
-              ┌─────────────────────────────────┐
-              │        IDENTITY PLATFORM        │
-              │                                 │
-              │  ┌───────────────────────────┐  │
-              │  │      Authentication       │  │
-              │  │                           │  │
-              │  │  Credentials              │  │
-              │  │  Google SSO               │  │
-              │  │  Sessions / Tokens        │  │
-              │  └─────────────┬─────────────┘  │
-              │                │                │
-              │  ┌─────────────▼─────────────┐  │
-              │  │       Authorization       │  │
-              │  │                           │  │
-              │  │  Users                    │  │
-              │  │  Roles / Permissions      │  │
-              │  └─────────────┬─────────────┘  │
-              │                │                │
-              │  ┌─────────────▼─────────────┐  │
-              │  │        PostgreSQL         │  │
-              │  └───────────────────────────┘  │
-              └─────────────────────────────────┘
-                               │
-                               │ Federated Identity
-                               ▼
-                         ┌─────────────┐
-                         │   Google    │
-                         └─────────────┘
+                         ┌──────────────────────┐
+                         │     Applications     │
+                         │                      │
+                         │   Business Systems   │
+                         └──────────┬───────────┘
+                                    │
+                                    │ Authentication
+                                    ▼
+              ┌─────────────────────────────────────────┐
+              │             IDENTITY PLATFORM            │
+              │              Modular Monolith            │
+              │                                         │
+              │  ┌──────────────┐  ┌─────────────────┐  │
+              │  │   Identity   │  │ Authentication  │  │
+              │  └──────────────┘  └─────────────────┘  │
+              │                                         │
+              │  ┌──────────────┐  ┌─────────────────┐  │
+              │  │   Sessions   │  │     Tokens      │  │
+              │  └──────────────┘  └─────────────────┘  │
+              │                                         │
+              │  ┌──────────────┐  ┌─────────────────┐  │
+              │  │ Two-Factor   │  │   Federation    │  │
+              │  └──────────────┘  └─────────────────┘  │
+              │                                         │
+              └──────────────┬──────────────────┬───────┘
+                             │                  │
+                             ▼                  ▼
+                    ┌────────────────┐   ┌─────────────────┐
+                    │   PostgreSQL   │   │      Redis      │
+                    │                │   │                 │
+                    │ Persistent     │   │ Blacklist       │
+                    │ identity data  │   │ Challenges      │
+                    │                │   │ Temporary state │
+                    └────────────────┘   └─────────────────┘
+                             │
+                             │
+              ┌──────────────┴──────────────────────┐
+              │                                     │
+              ▼                                     ▼
+       ┌───────────────┐                    ┌───────────────┐
+       │ External      │                    │ Email Service │
+       │ Identity      │                    │               │
+       │ Providers     │                    │ Decoupled     │
+       │               │                    │ delivery      │
+       │ Google        │                    │               │
+       │ Microsoft     │                    │               │
+       │ OIDC          │                    │               │
+       └───────────────┘                    └───────────────┘
